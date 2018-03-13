@@ -1,30 +1,30 @@
 # -*- coding: utf-8 -*-
-'''
-@time： 2018/2/25
-@author: RuiQing Chen
-@definition:mode: 1——人人  2——人机  3——机机
-            status: 1——人（正方）  2——人（反方）  3——机（正方）  4——机（反方）  5——暂停  6——停止
-            clicktimes:控制棋局中鼠标点击次数
-            times:控制工具栏的显示
-'''
+
+# @time： 2018/2/25
+# @author: RuiQing Chen
+# @definition:mode: 1——人人  2——人机  3——机机
+#             status: 1——人（正方）  2——人（反方）  3——机（正方）  4——机（反方）  5——暂停  6——停止
+#             clicktimes:控制棋局中鼠标点击次数
+#             times:控制工具栏的显示
+
 import sys
 import time
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from gamerule import gameRule
-from gamerecorder import gameRecorder
+from gamerule import GameRule
+from gamerecorder import GameRecorder
 from copy import deepcopy
 
 
 # 用于显示电脑招数的线程
-class workThread(QThread):
+class WorkThread(QThread):
     returnResult = pyqtSignal(list)  # 自定义主线程与子线程间通信信号
 
     def __init__(self, interFace):
         self.interFace = interFace
-        super(workThread, self).__init__()
+        super(WorkThread, self).__init__()
 
     # 重写线程运行函数
     def run(self):
@@ -44,10 +44,10 @@ class workThread(QThread):
 
 
 # 主窗口
-class interFace(QMainWindow):
+class InterFace(QMainWindow):
     # 初始化主界面
     def __init__(self, parent=None):
-        super(interFace, self).__init__(parent)
+        super(InterFace, self).__init__(parent)
         self.resize(1100, 800)
         self.setContextMenuPolicy(Qt.NoContextMenu)
         sizePolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
@@ -59,15 +59,15 @@ class interFace(QMainWindow):
         settings = QSettings("configure", QSettings.NativeFormat)
         self.status = settings.value("status", 1)
         self.mode = settings.value("mode", 1)
-        self.gamerecord = gameRecorder()
-        self.game = gameRule()
+        self.gamerecord = GameRecorder()
+        self.game = GameRule()
         self.initBoard()
         self.menuLayout()
         self.toolLayout()
         self.displayBoard()
         self.center()
         if self.mode == 2 or self.mode == 3:
-            self.workthread = workThread(self)
+            self.workthread = WorkThread(self)
             self.workthread.returnResult.connect(self.threadConduct)
             self.antiThreadFlag = 0  # 开启子线程响应
             self.workthread.start()
@@ -81,11 +81,11 @@ class interFace(QMainWindow):
         self.chessboard[(result[0], result[1])] = 0
         self.chessboard[(result[2], result[3])] = self.currentChess
         if self.currentChess == 2:
-            self.valueCoord[0].remove((result[0], result[1]))
-            self.valueCoord[0].append((result[2], result[3]))
+            self.chess_coord[0].remove((result[0], result[1]))
+            self.chess_coord[0].append((result[2], result[3]))
         else:
-            self.valueCoord[1].remove((result[0], result[1]))
-            self.valueCoord[1].append((result[2], result[3]))
+            self.chess_coord[1].remove((result[0], result[1]))
+            self.chess_coord[1].append((result[2], result[3]))
         self.sequentAnimation = QSequentialAnimationGroup()
         self.threadChessMove(result[0], result[1], result[2], result[3])
         self.chessboard[(result[4], result[5])] = 1
@@ -324,24 +324,24 @@ class interFace(QMainWindow):
         self.lasty = -1
         self.blank = 92
         self.labelList = []
-        self.valueCoord = []
-        self.valueCoord.append([])
-        self.valueCoord.append([])
+        self.chess_coord = []
+        self.chess_coord.append([])
+        self.chess_coord.append([])
         self.antimouse = 0
         # 此处需要加上显示棋子的label的清除
         for x in range(1, 11):
             for y in range(1, 11):
                 if x == 1 and y == 4 or x == 4 and y == 1 or x == 7 and y == 1 or x == 10 and y == 4:
                     self.chessboard[(x, y)] = 2
-                    self.valueCoord[0].append((x, y))
+                    self.chess_coord[0].append((x, y))
                 elif x == 1 and y == 7 or x == 4 and y == 10 or x == 7 and y == 10 or x == 10 and y == 7:
                     self.chessboard[(x, y)] = 3
-                    self.valueCoord[1].append((x, y))
+                    self.chess_coord[1].append((x, y))
                 else:
                     self.chessboard[(x, y)] = 0
         self.gamerecord.clear()
         self.gamerecord.currentChessBroad = deepcopy(self.chessboard)
-        self.gamerecord.storeChessBroad()
+        self.gamerecord.storeChessBoard()
 
     # 显示棋盘
     def displayBoard(self):
@@ -458,7 +458,7 @@ class interFace(QMainWindow):
 
     # 判断棋局是否结束
     def judgeIsover(self):
-        self.game.isOver(self.chessboard, self.status)
+        self.game.isOver(self.chessboard, self.status, self.chess_coord)
         if self.game.over:
             if self.game.winner == 1:
                 QMessageBox.information(self, "游戏结束", "反方获胜！  赢%d" % self.blank + "子", QMessageBox.Yes | QMessageBox.No,
@@ -528,7 +528,7 @@ class interFace(QMainWindow):
                     self.gamerecord.currentMove.append(y)
                     self.gamerecord.currentChessBroad = deepcopy(self.chessboard)
                     self.gamerecord.storeMove()
-                    self.gamerecord.storeChessBroad()
+                    self.gamerecord.storeChessBoard()
                     self.antimouse = 1  # 关闭鼠标响应
                     self.shootArrow(lx, ly, x, y)
                 else:
@@ -542,11 +542,11 @@ class interFace(QMainWindow):
                     self.gamerecord.currentMove.append(x)
                     self.gamerecord.currentMove.append(y)
                     if self.currentChess == 2:
-                        self.valueCoord[0].remove((lx, ly))
-                        self.valueCoord[0].append((x, y))
+                        self.chess_coord[0].remove((lx, ly))
+                        self.chess_coord[0].append((x, y))
                     else:
-                        self.valueCoord[1].remove((lx, ly))
-                        self.valueCoord[1].append((x, y))
+                        self.chess_coord[1].remove((lx, ly))
+                        self.chess_coord[1].append((x, y))
                     self.antimouse = 1
                     self.chessMove(lx, ly, x, y)
                 else:
@@ -594,6 +594,6 @@ class interFace(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon("./images/moon_128px.ico"))
-    form = interFace()
+    form = InterFace()
     form.show()
     sys.exit(app.exec())

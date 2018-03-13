@@ -1,25 +1,28 @@
 # -*- coding: utf-8 -*-
-'''
-@time： 2018/3/11
-@author: RuiQing Chen
-@definition:
-'''
+# @create_time： 2018/3/11
+# @move_time: 2018/3/13 from strategy to tool
+# @author: RuiQing Chen
+# @definition:
+
 from random import choice, randrange
 from copy import deepcopy
 
 
-class randomMove():
-    def __init__(self, chessbroad, status, valuecoord):
-        self.chessbroad = deepcopy(chessbroad)
+class Simulator:
+    def __init__(self, chessboard, status, chess_coord, simulation_num):
+        self.chessboard = deepcopy(chessboard)
         self.status = status
-        self.valuecoord = valuecoord
-        self.result = []
+        self.chess_coord = chess_coord[:]
+        self.simulation_num = simulation_num
+        self.win_num = 0
 
-    def chessMove(self):
-        if self.status == 3:
-            coord = self.valuecoord[0][:]
+    # 棋子的随机移动
+    def chessMove(self, chessboard, status, chess_coord):
+        self.result = []
+        if status == 3:
+            coord = chess_coord[0][:]
         else:
-            coord = self.valuecoord[1][:]
+            coord = chess_coord[1][:]
         while len(coord):
             select_coord = choice(coord)
             direction = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
@@ -29,98 +32,99 @@ class randomMove():
                 y = select_coord[1]
                 if select_direct == (-1, -1):
                     step = 1
-                    while self.chessbroad[(x - step, y - step)] == 0:
+                    while chessboard[(x - step, y - step)] == 0:
                         step += 1
                     if step > 1:
                         d = randrange(1, step)
-                        self.arrowShoot(x, y, x - d, y - d)
+                        self.arrowShoot(x, y, x - d, y - d, chessboard)
                         return True
                     else:
                         direction.remove((-1, -1))
                 elif select_direct == (-1, 0):
                     step = 1
-                    while self.chessbroad[(x - step, y)] == 0:
+                    while chessboard[(x - step, y)] == 0:
                         step += 1
                     if step > 1:
                         d = randrange(1, step)
-                        self.arrowShoot(x, y, x - d, y)
+                        self.arrowShoot(x, y, x - d, y, chessboard)
                         return True
                     else:
                         direction.remove((-1, 0))
                 elif select_direct == (-1, 1):
                     step = 1
-                    while self.chessbroad[(x - step, y + step)] == 0:
+                    while chessboard[(x - step, y + step)] == 0:
                         step += 1
                     if step > 1:
                         d = randrange(1, step)
-                        self.arrowShoot(x, y, x - d, y + d)
+                        self.arrowShoot(x, y, x - d, y + d, chessboard)
                         return True
                     else:
                         direction.remove((-1, 1))
 
                 elif select_direct == (0, -1):
                     step = 1
-                    while self.chessbroad[(x, y - step)] == 0:
+                    while chessboard[(x, y - step)] == 0:
                         step += 1
                     if step > 1:
                         d = randrange(1, step)
-                        self.arrowShoot(x, y, x, y - d)
+                        self.arrowShoot(x, y, x, y - d, chessboard)
                         return True
                     else:
                         direction.remove((0, -1))
                 elif select_direct == (0, 1):
                     step = 1
-                    while self.chessbroad[(x, y + step)] == 0:
+                    while chessboard[(x, y + step)] == 0:
                         step += 1
                     if step > 1:
                         d = randrange(1, step)
-                        self.arrowShoot(x, y, x, y + d)
+                        self.arrowShoot(x, y, x, y + d, chessboard)
                         return True
                     else:
                         direction.remove((0, 1))
 
                 elif select_direct == (1, -1):
                     step = 1
-                    while self.chessbroad[(x + step, y - step)] == 0:
+                    while chessboard[(x + step, y - step)] == 0:
                         step += 1
                     if step > 1:
                         d = randrange(1, step)
-                        self.arrowShoot(x, y, x + d, y - d)
+                        self.arrowShoot(x, y, x + d, y - d, chessboard)
                         return True
                     else:
                         direction.remove((1, -1))
                 elif select_direct == (1, 0):
                     step = 1
-                    while self.chessbroad[(x + step, y)] == 0:
+                    while chessboard[(x + step, y)] == 0:
                         step += 1
                     if step > 1:
                         d = randrange(1, step)
-                        self.arrowShoot(x, y, x + d, y)
+                        self.arrowShoot(x, y, x + d, y, chessboard)
                         return True
                     else:
                         direction.remove((1, 0))
                 else:
                     step = 1
-                    while self.chessbroad[(x + step, y + step)] == 0:
+                    while chessboard[(x + step, y + step)] == 0:
                         step += 1
                     if step > 1:
                         d = randrange(1, step)
-                        self.arrowShoot(x, y, x + d, y + d)
+                        self.arrowShoot(x, y, x + d, y + d, chessboard)
                         return True
                     else:
                         direction.remove((1, 1))
             coord.remove(select_coord)
         return False
 
-    def arrowShoot(self, lx, ly, x, y):
-        self.chessbroad[(x, y)] = self.chessbroad[(lx, ly)]
-        self.chessbroad[(lx, ly)] = 0
+    # 障碍的随机设置
+    def arrowShoot(self, lx, ly, x, y, chessboard):
+        chessboard[(x, y)] = chessboard[(lx, ly)]
+        chessboard[(lx, ly)] = 0
         direction = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
         while len(direction):
             select_direct = choice(direction)
             if select_direct == (-1, -1):
                 step = 1
-                while self.chessbroad[(x - step, y - step)] == 0:
+                while chessboard[(x - step, y - step)] == 0:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
@@ -130,7 +134,7 @@ class randomMove():
                     direction.remove((-1, -1))
             elif select_direct == (-1, 0):
                 step = 1
-                while self.chessbroad[(x - step, y)] == 0:
+                while chessboard[(x - step, y)] == 0:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
@@ -140,7 +144,7 @@ class randomMove():
                     direction.remove((-1, 0))
             elif select_direct == (-1, 1):
                 step = 1
-                while self.chessbroad[(x - step, y + step)] == 0:
+                while chessboard[(x - step, y + step)] == 0:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
@@ -151,7 +155,7 @@ class randomMove():
 
             elif select_direct == (0, -1):
                 step = 1
-                while self.chessbroad[(x, y - step)] == 0:
+                while chessboard[(x, y - step)] == 0:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
@@ -161,7 +165,7 @@ class randomMove():
                     direction.remove((0, -1))
             elif select_direct == (0, 1):
                 step = 1
-                while self.chessbroad[(x, y + step)] == 0:
+                while chessboard[(x, y + step)] == 0:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
@@ -172,7 +176,7 @@ class randomMove():
 
             elif select_direct == (1, -1):
                 step = 1
-                while self.chessbroad[(x + step, y - step)] == 0:
+                while chessboard[(x + step, y - step)] == 0:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
@@ -182,7 +186,7 @@ class randomMove():
                     direction.remove((1, -1))
             elif select_direct == (1, 0):
                 step = 1
-                while self.chessbroad[(x + step, y)] == 0:
+                while chessboard[(x + step, y)] == 0:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
@@ -192,7 +196,7 @@ class randomMove():
                     direction.remove((1, 0))
             else:
                 step = 1
-                while self.chessbroad[(x + step, y + step)] == 0:
+                while chessboard[(x + step, y + step)] == 0:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
@@ -201,5 +205,26 @@ class randomMove():
                 else:
                     direction.remove((1, 1))
 
-        self.chessbroad[(lx, ly)] = self.chessbroad[(x, y)]
-        self.chessbroad[(x, y)] = 0
+        chessboard[(lx, ly)] = chessboard[(x, y)]
+        chessboard[(x, y)] = 0
+
+    # 游戏模拟
+    def simulate(self):
+        for i in range(self.simulation_num):
+            chessboard = deepcopy(self.chessboard)
+            chess_coord = self.chess_coord[:]
+            status = self.status
+            while self.chessMove(chessboard, status, chess_coord):
+                chessboard[(self.result[2], self.result[3])] = chessboard[(self.result[0], self.result[1])]
+                chessboard[(self.result[0], self.result[1])] = 0
+                chessboard[(self.result[4], self.result[5])] = 1
+                if status == 3:
+                    chess_coord[0].remove((self.result[0], self.result[1]))
+                    chess_coord[0].append((self.result[2], self.result[3]))
+                    status = 4
+                else:
+                    chess_coord[1].remove((self.result[0], self.result[1]))
+                    chess_coord[1].append((self.result[2], self.result[3]))
+                    status = 3
+            if status != self.status:
+                self.win_num += 1

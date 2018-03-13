@@ -1,25 +1,24 @@
 # -*- coding: utf-8 -*-
-'''
-@time： 2018/3/7
-@author: RuiQing Chen
-@definition:gameForwardStack:
-            gameBackwardStack:
-            currentMove:
-            chessBroadRecord:
-            currentChessBroadFlag:
-            currentChessBroad:
-'''
+# @time： 2018/3/7
+# @author: RuiQing Chen
+# @definition:gameForwardStack:
+#             gameBackwardStack:
+#             currentMove:
+#             chessBoardRecord:
+#             currentChessBoardFlag:
+#             currentChessBoard:
+
 from copy import deepcopy
 
 
-class gameRecorder():
+class GameRecorder:
     def __init__(self):
         self.gameForwardStack = []
         self.gameBackwardStack = []
         self.currentMove = []
-        self.chessBroadRecord = []
-        self.currentChessBroadFlag = -1
-        self.currentChessBroad = {}
+        self.chessBoardRecord = []
+        self.currentChessBoardFlag = -1
+        self.currentChessBoard = {}
 
     # 存储走法
     def storeMove(self):
@@ -77,69 +76,69 @@ class gameRecorder():
         return nextAllStep
 
     # 存储棋局
-    def storeChessBroad(self):
-        self.chessBroadRecord.append(deepcopy(self.currentChessBroad))
-        self.currentChessBroadFlag += 1
-        self.currentChessBroad.clear()
+    def storeChessBoard(self):
+        self.chessBoardRecord.append(deepcopy(self.currentChessBoard))
+        self.currentChessBoardFlag += 1
+        self.currentChessBoard.clear()
 
     # 获得上一步的棋局
-    def getLastChessBroad(self):
-        lastChessBroad = {}
-        flag = self.currentChessBroadFlag
+    def getLastChessBoard(self):
+        lastChessBoard = {}
+        flag = self.currentChessBoardFlag
         if flag >= 1:
-            lastChessBroad = self.currentChessBroad[flag]
-            self.currentChessBroadFlag -= 1
-        return lastChessBroad
+            lastChessBoard = self.currentChessBoard[flag]
+            self.currentChessBoardFlag -= 1
+        return lastChessBoard
 
     # 获得下一步的棋局
-    def getNextChessBroad(self):
-        nextChessBroad = {}
-        flag = self.currentChessBroadFlag
-        if flag < len(self.currentChessBroad) - 1:
-            nextChessBroad = self.currentChessBroad[flag]
-            self.currentChessBroadFlag += 1
-        return nextChessBroad
+    def getNextChessBoard(self):
+        nextChessBoard = {}
+        flag = self.currentChessBoardFlag
+        if flag < len(self.currentChessBoard) - 1:
+            nextChessBoard = self.currentChessBoard[flag]
+            self.currentChessBoardFlag += 1
+        return nextChessBoard
 
     # 获得五步之前的棋局
-    def getLastFifthChessBroad(self):
-        lastFifthChessBroad = {}
-        flag = self.currentChessBroadFlag
+    def getLastFifthChessBoard(self):
+        lastFifthChessBoard = {}
+        flag = self.currentChessBoardFlag
         if flag >= 5:
-            lastFifthChessBroad = self.currentChessBroad[flag]
-            self.currentChessBroadFlag -= 5
-        return lastFifthChessBroad
+            lastFifthChessBoard = self.currentChessBoard[flag]
+            self.currentChessBoardFlag -= 5
+        return lastFifthChessBoard
 
     # 获得五步之后的棋局
-    def getNextFifthChessBroad(self):
-        nextFifthChessBroad = {}
-        flag = self.currentChessBroadFlag
-        if flag < len(self.currentChessBroad) - 5:
-            nextFifthChessBroad = self.currentChessBroad[flag]
-            self.currentChessBroadFlag += 5
-        return nextFifthChessBroad
+    def getNextFifthChessBoard(self):
+        nextFifthChessBoard = {}
+        flag = self.currentChessBoardFlag
+        if flag < len(self.currentChessBoard) - 5:
+            nextFifthChessBoard = self.currentChessBoard[flag]
+            self.currentChessBoardFlag += 5
+        return nextFifthChessBoard
 
     # 获得初始局面
-    def getBeginChessBroad(self):
-        beginChessBroad = {}
-        if len(self.currentChessBroad):
-            beginChessBroad = self.currentChessBroad[0]
-            self.currentChessBroadFlag = 0
-        return beginChessBroad
+    def getBeginChessBoard(self):
+        beginChessBoard = {}
+        if len(self.currentChessBoard):
+            beginChessBoard = self.currentChessBoard[0]
+            self.currentChessBoardFlag = 0
+        return beginChessBoard
 
     # 获得最终局面
-    def getEndChessBroad(self):
-        endChessBroad = {}
-        index = len(self.currentChessBroad)
+    def getEndChessBoard(self):
+        endChessBoard = {}
+        index = len(self.currentChessBoard)
         if index:
-            endChessBroad = self.currentChessBroad[index - 1]
-            self.currentChessBroadFlag = index - 1
-        return endChessBroad
+            endChessBoard = self.currentChessBoard[index - 1]
+            self.currentChessBoardFlag = index - 1
+        return endChessBoard
 
     # 清除容器内容
     def clear(self):
-        self.chessBroadRecord.clear()
+        self.chessBoardRecord.clear()
         self.gameForwardStack.clear()
         self.gameBackwardStack.clear()
         self.currentMove.clear()
-        self.currentChessBroad.clear()
-        self.currentChessBroadFlag = -1
+        self.currentChessBoard.clear()
+        self.currentChessBoardFlag = -1
