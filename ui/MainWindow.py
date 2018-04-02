@@ -15,6 +15,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from gamerule import GameRule
 from gamerecorder import GameRecorder
+from strategy import Strategy
 from copy import deepcopy
 
 
@@ -58,7 +59,7 @@ class InterFace(QMainWindow):
         self.setWindowTitle("moonlight")
         settings = QSettings("configure", QSettings.NativeFormat)
         self.status = settings.value("status", 1)
-        self.mode = settings.value("mode", 1)
+        self.mode = settings.value("mode", 2)
         self.gamerecord = GameRecorder()
         self.game = GameRule()
         self.initBoard()
@@ -151,7 +152,11 @@ class InterFace(QMainWindow):
 
     # 电脑搜索走法函数
     def computeData(self):
-        pass
+        strategy=Strategy(self.chessboard,self.status,self.chess_coord,self.blank)
+        result=[]
+        for i in range(6):
+            result.append(strategy.result[i])
+        return result
 
     '''
     以下为主线程UI逻辑函数
@@ -355,11 +360,11 @@ class InterFace(QMainWindow):
         self.display = QLabel(self.centralwidget)
         self.display.setFont(QFont("微软雅黑", 12))
         self.display.setAlignment(Qt.AlignTop)
-        self.text = "玩家————————————————————————————————————————————————————————\
-\n\n    白方：    \n    黑方：    \n\n\n游戏时间————————————————————————————————————————————\
-——————————\n\n    白方：    \n    黑方：    \n\n\n当前行为——————————————————————————————————\
+        self.text = "\n玩家————————————————————————————————————————————————————————\
+\n\n    白方：  Human  \n\n    黑方：  Human  \n\n\n游戏时间————————————————————————————————————————————\
+——————————\n\n    白方：  00:00  \n\n    黑方：  00:00  \n\n\n当前行为——————————————————————————————————\
 ————————————————————————\n\n    None\n\n\n状态——————————————————————————————————\
-——————————————————————\n\n    游戏状态：    \n    估值：    \n    走法总数：    "
+——————————————————————\n\n    游戏状态：  等待开始  \n\n    估值：  0.0  \n\n    走法总数：  0  "
         self.display.setText(self.text)
         self.display.setGeometry(self.centralwidget.width() / 3 * 2, 20, self.centralwidget.width() / 3 - 40,
                                  self.centralwidget.height() - 40)

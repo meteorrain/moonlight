@@ -27,70 +27,70 @@ class Evaluator:
                 self.kingMoveNegative[(x, y)] = 0
         PositiveCollect = []
         NegativeCollect = []
-        for coord in self.chess_coord[0]:
-            x = coord[0]
-            y = coord[1]
-            if self.chessboard[(x - 1, y - 1)] == 0 and self.kingMovePositive[
+        for i in range(0, 7, 2):
+            x = self.chess_coord[0][i]
+            y = self.chess_coord[0][i + 1]
+            if self.chessboard[x - 1][y - 1] == 0 and self.kingMovePositive[
                 (x - 1, y - 1)] == 0:
                 self.kingMovePositive[(x - 1, y - 1)] = 1
                 PositiveCollect.append((x - 1, y - 1))
-            if self.chessboard[(x - 1, y)] == 0 and self.kingMovePositive[(x - 1, y)] == 0:
+            if self.chessboard[x - 1][y] == 0 and self.kingMovePositive[(x - 1, y)] == 0:
                 self.kingMovePositive[(x - 1, y)] = 1
                 PositiveCollect.append((x - 1, y))
-            if self.chessboard[(x - 1, y + 1)] == 0 and self.kingMovePositive[
+            if self.chessboard[x - 1][y + 1] == 0 and self.kingMovePositive[
                 (x - 1, y + 1)] == 0:
                 self.kingMovePositive[(x - 1, y + 1)] = 1
                 PositiveCollect.append((x - 1, y + 1))
 
-            if self.chessboard[(x, y - 1)] == 0 and self.kingMovePositive[(x, y - 1)] == 0:
+            if self.chessboard[x][y - 1] == 0 and self.kingMovePositive[(x, y - 1)] == 0:
                 self.kingMovePositive[(x, y - 1)] = 1
                 PositiveCollect.append((x, y - 1))
-            if self.chessboard[(x, y + 1)] == 0 and self.kingMovePositive[(x, y + 1)] == 0:
+            if self.chessboard[x][y + 1] == 0 and self.kingMovePositive[(x, y + 1)] == 0:
                 self.kingMovePositive[(x, y + 1)] = 1
                 PositiveCollect.append((x, y + 1))
 
-            if self.chessboard[(x + 1, y - 1)] == 0 and self.kingMovePositive[
+            if self.chessboard[x + 1][y - 1] == 0 and self.kingMovePositive[
                 (x + 1, y - 1)] == 0:
                 self.kingMovePositive[(x + 1, y - 1)] = 1
                 PositiveCollect.append((x + 1, y - 1))
-            if self.chessboard[(x + 1, y)] == 0 and self.kingMovePositive[(x + 1, y)] == 0:
+            if self.chessboard[x + 1][y] == 0 and self.kingMovePositive[(x + 1, y)] == 0:
                 self.kingMovePositive[(x + 1, y)] = 1
                 PositiveCollect.append((x + 1, y))
-            if self.chessboard[(x + 1, y + 1)] == 0 and self.kingMovePositive[
+            if self.chessboard[x + 1][y + 1] == 0 and self.kingMovePositive[
                 (x + 1, y + 1)] == 0:
                 self.kingMovePositive[(x + 1, y + 1)] = 1
                 PositiveCollect.append((x + 1, y + 1))
 
-        for coord in self.chess_coord[1]:
-            x = coord[0]
-            y = coord[1]
-            if self.chessboard[(x - 1, y - 1)] == 0 and self.kingMoveNegative[
+        for i in range(0, 7, 2):
+            x = self.chess_coord[1][i]
+            y = self.chess_coord[1][i + 1]
+            if self.chessboard[x - 1][y - 1] == 0 and self.kingMoveNegative[
                 (x - 1, y - 1)] == 0:
                 self.kingMoveNegative[(x - 1, y - 1)] = 1
                 NegativeCollect.append((x - 1, y - 1))
-            if self.chessboard[(x - 1, y)] == 0 and self.kingMoveNegative[(x - 1, y)] == 0:
+            if self.chessboard[x - 1][y] == 0 and self.kingMoveNegative[(x - 1, y)] == 0:
                 self.kingMoveNegative[(x - 1, y)] = 1
                 NegativeCollect.append((x - 1, y))
-            if self.chessboard[(x - 1, y + 1)] == 0 and self.kingMoveNegative[
+            if self.chessboard[x - 1][y + 1] == 0 and self.kingMoveNegative[
                 (x - 1, y + 1)] == 0:
                 self.kingMoveNegative[(x - 1, y + 1)] = 1
                 NegativeCollect.append((x - 1, y + 1))
 
-            if self.chessboard[(x, y - 1)] == 0 and self.kingMoveNegative[(x, y - 1)] == 0:
+            if self.chessboard[x][y - 1] == 0 and self.kingMoveNegative[(x, y - 1)] == 0:
                 self.kingMoveNegative[(x, y - 1)] = 1
                 NegativeCollect.append((x, y - 1))
-            if self.chessboard[(x, y + 1)] == 0 and self.kingMoveNegative[(x, y + 1)] == 0:
+            if self.chessboard[x][y + 1] == 0 and self.kingMoveNegative[(x, y + 1)] == 0:
                 self.kingMoveNegative[(x, y + 1)] = 1
                 NegativeCollect.append((x, y + 1))
 
-            if self.chessboard[(x + 1, y - 1)] == 0 and self.kingMoveNegative[
+            if self.chessboard[x + 1][y - 1] == 0 and self.kingMoveNegative[
                 (x + 1, y - 1)] == 0:
                 self.kingMoveNegative[(x + 1, y - 1)] = 1
                 NegativeCollect.append((x + 1, y - 1))
-            if self.chessboard[(x + 1, y)] == 0 and self.kingMoveNegative[(x + 1, y)] == 0:
+            if self.chessboard[x + 1][y] == 0 and self.kingMoveNegative[(x + 1, y)] == 0:
                 self.kingMoveNegative[(x + 1, y)] = 1
                 NegativeCollect.append((x + 1, y))
-            if self.chessboard[(x + 1, y + 1)] == 0 and self.kingMoveNegative[
+            if self.chessboard[x + 1][y + 1] == 0 and self.kingMoveNegative[
                 (x + 1, y + 1)] == 0:
                 self.kingMoveNegative[(x + 1, y + 1)] = 1
                 NegativeCollect.append((x + 1, y + 1))
@@ -100,44 +100,44 @@ class Evaluator:
             for coord in PositiveCollect:
                 x = coord[0]
                 y = coord[1]
-                if self.chessboard[(x - 1, y - 1)] == 0 and (
+                if self.chessboard[x - 1][y - 1] == 0 and (
                         self.kingMovePositive[(x - 1, y - 1)] > n or
                         self.kingMovePositive[(x - 1, y - 1)] == 0):
                     nextCoord.append((x - 1, y - 1))
                     self.kingMovePositive[(x - 1, y - 1)] = n
-                if self.chessboard[(x - 1, y)] == 0 and (
+                if self.chessboard[x - 1][y] == 0 and (
                         self.kingMovePositive[(x - 1, y)] > n or
                         self.kingMovePositive[(x - 1, y)] == 0):
                     nextCoord.append((x - 1, y))
                     self.kingMovePositive[(x - 1, y)] = n
-                if self.chessboard[(x - 1, y + 1)] == 0 and (
+                if self.chessboard[x - 1][y + 1] == 0 and (
                         self.kingMovePositive[(x - 1, y + 1)] > n or
                         self.kingMovePositive[(x - 1, y + 1)] == 0):
                     nextCoord.append((x - 1, y + 1))
                     self.kingMovePositive[(x - 1, y + 1)] = n
 
-                if self.chessboard[(x, y - 1)] == 0 and (
+                if self.chessboard[x][y - 1] == 0 and (
                         self.kingMovePositive[(x, y - 1)] > n or
                         self.kingMovePositive[(x, y - 1)] == 0):
                     nextCoord.append((x, y - 1))
                     self.kingMovePositive[(x, y - 1)] = n
-                if self.chessboard[(x, y + 1)] == 0 and (
+                if self.chessboard[x][y + 1] == 0 and (
                         self.kingMovePositive[(x, y + 1)] > n or
                         self.kingMovePositive[(x, y + 1)] == 0):
                     nextCoord.append((x, y + 1))
                     self.kingMovePositive[(x, y + 1)] = n
 
-                if self.chessboard[(x + 1, y - 1)] == 0 and (
+                if self.chessboard[x + 1][y - 1] == 0 and (
                         self.kingMovePositive[(x + 1, y - 1)] > n or
                         self.kingMovePositive[(x + 1, y - 1)] == 0):
                     nextCoord.append((x + 1, y - 1))
                     self.kingMovePositive[(x + 1, y - 1)] = n
-                if self.chessboard[(x + 1, y)] == 0 and (
+                if self.chessboard[x + 1][y] == 0 and (
                         self.kingMovePositive[(x + 1, y)] > n or
                         self.kingMovePositive[(x + 1, y)] == 0):
                     nextCoord.append((x + 1, y))
                     self.kingMovePositive[(x + 1, y)] = n
-                if self.chessboard[(x + 1, y + 1)] == 0 and (
+                if self.chessboard[x + 1][y + 1] == 0 and (
                         self.kingMovePositive[(x + 1, y + 1)] > n or
                         self.kingMovePositive[(x + 1, y + 1)] == 0):
                     nextCoord.append((x + 1, y + 1))
@@ -148,44 +148,44 @@ class Evaluator:
             for coord in NegativeCollect:
                 x = coord[0]
                 y = coord[1]
-                if self.chessboard[(x - 1, y - 1)] == 0 and (
+                if self.chessboard[x - 1][y - 1] == 0 and (
                         self.kingMoveNegative[(x - 1, y - 1)] > n or
                         self.kingMoveNegative[(x - 1, y - 1)] == 0):
                     nextCoord.append((x - 1, y - 1))
                     self.kingMoveNegative[(x - 1, y - 1)] = n
-                if self.chessboard[(x - 1, y)] == 0 and (
+                if self.chessboard[x - 1][y] == 0 and (
                         self.kingMoveNegative[(x - 1, y)] > n or
                         self.kingMoveNegative[(x - 1, y)] == 0):
                     nextCoord.append((x - 1, y))
                     self.kingMoveNegative[(x - 1, y)] = n
-                if self.chessboard[(x - 1, y + 1)] == 0 and (
+                if self.chessboard[x - 1][y + 1] == 0 and (
                         self.kingMoveNegative[(x - 1, y + 1)] > n or
                         self.kingMoveNegative[(x - 1, y + 1)] == 0):
                     nextCoord.append((x - 1, y + 1))
                     self.kingMoveNegative[(x - 1, y + 1)] = n
 
-                if self.chessboard[(x, y - 1)] == 0 and (
+                if self.chessboard[x][y - 1] == 0 and (
                         self.kingMoveNegative[(x, y - 1)] > n or
                         self.kingMoveNegative[(x, y - 1)] == 0):
                     nextCoord.append((x, y - 1))
                     self.kingMoveNegative[(x, y - 1)] = n
-                if self.chessboard[(x, y + 1)] == 0 and (
+                if self.chessboard[x][y + 1] == 0 and (
                         self.kingMoveNegative[(x, y + 1)] > n or
                         self.kingMoveNegative[(x, y + 1)] == 0):
                     nextCoord.append((x, y + 1))
                     self.kingMoveNegative[(x, y + 1)] = n
 
-                if self.chessboard[(x + 1, y - 1)] == 0 and (
+                if self.chessboard[x + 1][y - 1] == 0 and (
                         self.kingMoveNegative[(x + 1, y - 1)] > n or
                         self.kingMoveNegative[(x + 1, y - 1)] == 0):
                     nextCoord.append((x + 1, y - 1))
                     self.kingMoveNegative[(x + 1, y - 1)] = n
-                if self.chessboard[(x + 1, y)] == 0 and (
+                if self.chessboard[x + 1][y] == 0 and (
                         self.kingMoveNegative[(x + 1, y)] > n or
                         self.kingMoveNegative[(x + 1, y)] == 0):
                     nextCoord.append((x + 1, y))
                     self.kingMoveNegative[(x + 1, y)] = n
-                if self.chessboard[(x + 1, y + 1)] == 0 and (
+                if self.chessboard[x + 1][y + 1] == 0 and (
                         self.kingMoveNegative[(x + 1, y + 1)] > n or
                         self.kingMoveNegative[(x + 1, y + 1)] == 0):
                     nextCoord.append((x + 1, y + 1))
@@ -201,109 +201,109 @@ class Evaluator:
                 self.queenMoveNegative[(x, y)] = 0
         PositiveCollect = []
         NegativeCollect = []
-        for coord in self.chess_coord[0]:
-            x = coord[0]
-            y = coord[1]
+        for i in range(0, 7, 2):
+            x = self.chess_coord[0][i]
+            y = self.chess_coord[0][i + 1]
             step = 1
-            while self.chessboard[(x - step, y - step)] == 0:
+            while self.chessboard[x - step][y - step] == 0:
                 if self.queenMovePositive[(x - step, y - step)] == 0:
                     self.queenMovePositive[(x - step, y - step)] = 1
                     PositiveCollect.append((x - step, y - step))
                 step += 1
             step = 1
-            while self.chessboard[(x - step, y)] == 0:
+            while self.chessboard[x - step][y] == 0:
                 if self.queenMovePositive[(x - step, y)] == 0:
                     self.queenMovePositive[(x - step, y)] = 1
                     PositiveCollect.append((x - step, y))
                 step += 1
             step = 1
-            while self.chessboard[(x - step, y + step)] == 0:
+            while self.chessboard[x - step][y + step] == 0:
                 if self.queenMovePositive[(x - step, y + step)] == 0:
                     self.queenMovePositive[(x - step, y + step)] = 1
                     PositiveCollect.append((x - step, y + step))
                 step += 1
 
             step = 1
-            while self.chessboard[(x, y - step)] == 0:
+            while self.chessboard[x][y - step] == 0:
                 if self.queenMovePositive[(x, y - step)] == 0:
                     self.queenMovePositive[(x, y - step)] = 1
                     PositiveCollect.append((x, y - step))
                 step += 1
             step = 1
-            while self.chessboard[(x, y + step)] == 0:
+            while self.chessboard[x][y + step] == 0:
                 if self.queenMovePositive[(x, y + step)] == 0:
                     self.queenMovePositive[(x, y + step)] = 1
                     PositiveCollect.append((x, y + step))
                 step += 1
 
             step = 1
-            while self.chessboard[(x + step, y - step)] == 0:
+            while self.chessboard[x + step][y - step] == 0:
                 if self.queenMovePositive[(x + step, y - step)] == 0:
                     self.queenMovePositive[(x + step, y - step)] = 1
                     PositiveCollect.append((x + step, y - step))
                 step += 1
             step = 1
-            while self.chessboard[(x + step, y)] == 0:
+            while self.chessboard[x + step][y] == 0:
                 if self.queenMovePositive[(x + step, y)] == 0:
                     self.queenMovePositive[(x + step, y)] = 1
                     PositiveCollect.append((x + step, y))
                 step += 1
             step = 1
-            while self.chessboard[(x + step, y + step)] == 0:
+            while self.chessboard[x + step][y + step] == 0:
                 if self.queenMovePositive[(x + step, y + step)] == 0:
                     self.queenMovePositive[(x + step, y + step)] = 1
                     PositiveCollect.append((x + step, y + step))
                 step += 1
 
-        for coord in self.chess_coord[1]:
-            x = coord[0]
-            y = coord[1]
+        for i in range(0, 7, 2):
+            x = self.chess_coord[1][i]
+            y = self.chess_coord[1][i + 1]
             step = 1
-            while self.chessboard[(x - step, y - step)] == 0:
+            while self.chessboard[x - step][y - step] == 0:
                 if self.queenMoveNegative[(x - step, y - step)] == 0:
                     self.queenMoveNegative[(x - step, y - step)] = 1
                     NegativeCollect.append((x - step, y - step))
                 step += 1
             step = 1
-            while self.chessboard[(x - step, y)] == 0:
+            while self.chessboard[x - step][y] == 0:
                 if self.queenMoveNegative[(x - step, y)] == 0:
                     self.queenMoveNegative[(x - step, y)] = 1
                     NegativeCollect.append((x - step, y))
                 step += 1
             step = 1
-            while self.chessboard[(x - step, y + step)] == 0:
+            while self.chessboard[x - step][y + step] == 0:
                 if self.queenMoveNegative[(x - step, y + step)] == 0:
                     self.queenMoveNegative[(x - step, y + step)] = 1
                     NegativeCollect.append((x - step, y + step))
                 step += 1
 
             step = 1
-            while self.chessboard[(x, y - step)] == 0:
+            while self.chessboard[x][y - step] == 0:
                 if self.queenMoveNegative[(x, y - step)] == 0:
                     self.queenMoveNegative[(x, y - step)] = 1
                     NegativeCollect.append((x, y - step))
                 step += 1
             step = 1
-            while self.chessboard[(x, y + step)] == 0:
+            while self.chessboard[x][y + step] == 0:
                 if self.queenMoveNegative[(x, y + step)] == 0:
                     self.queenMoveNegative[(x, y + step)] = 1
                     NegativeCollect.append((x, y + step))
                 step += 1
 
             step = 1
-            while self.chessboard[(x + step, y - step)] == 0:
+            while self.chessboard[x + step][y - step] == 0:
                 if self.queenMoveNegative[(x + step, y - step)] == 0:
                     self.queenMoveNegative[(x + step, y - step)] = 1
                     NegativeCollect.append((x + step, y - step))
                 step += 1
             step = 1
-            while self.chessboard[(x + step, y)] == 0:
+            while self.chessboard[x + step][y] == 0:
                 if self.queenMoveNegative[(x + step, y)] == 0:
                     self.queenMoveNegative[(x + step, y)] = 1
                     NegativeCollect.append((x + step, y))
                 step += 1
             step = 1
-            while self.chessboard[(x + step, y + step)] == 0:
+            while self.chessboard[x + step][y + step] == 0:
                 if self.queenMoveNegative[(x + step, y + step)] == 0:
                     self.queenMoveNegative[(x + step, y + step)] = 1
                     NegativeCollect.append((x + step, y + step))
@@ -316,20 +316,20 @@ class Evaluator:
                 x = coord[0]
                 y = coord[1]
                 step = 1
-                while self.chessboard[(x - step, y - step)] == 0 and (
+                while self.chessboard[x - step][y - step] == 0 and (
                         self.queenMovePositive[(x - step, y - step)] == 0 or self.queenMovePositive[
                     (x - step, y - step)] > n):
                     self.queenMovePositive[(x - step, y - step)] = n
                     nextCoord.append((x - step, y - step))
                     step += 1
                 step = 1
-                while self.chessboard[(x - step, y)] == 0 and (
+                while self.chessboard[x - step][y] == 0 and (
                         self.queenMovePositive[(x - step, y)] == 0 or self.queenMovePositive[(x - step, y)] > n):
                     self.queenMovePositive[(x - step, y)] = n
                     nextCoord.append((x - step, y))
                     step += 1
                 step = 1
-                while self.chessboard[(x - step, y + step)] == 0 and (
+                while self.chessboard[x - step][y + step] == 0 and (
                         self.queenMovePositive[(x - step, y + step)] == 0 or self.queenMovePositive[
                     (x - step, y + step)] > n):
                     self.queenMovePositive[(x - step, y + step)] = n
@@ -337,33 +337,33 @@ class Evaluator:
                     step += 1
 
                 step = 1
-                while self.chessboard[(x, y - step)] == 0 and (
+                while self.chessboard[x][y - step] == 0 and (
                         self.queenMovePositive[(x, y - step)] == 0 or self.queenMovePositive[(x, y - step)] > n):
                     self.queenMovePositive[(x, y - step)] = n
                     nextCoord.append((x, y - step))
                     step += 1
                 step = 1
-                while self.chessboard[(x, y + step)] == 0 and (
+                while self.chessboard[x][y + step] == 0 and (
                         self.queenMovePositive[(x, y + step)] == 0 or self.queenMovePositive[(x, y + step)] > n):
                     self.queenMovePositive[(x, y + step)] = n
                     nextCoord.append((x, y + step))
                     step += 1
 
                 step = 1
-                while self.chessboard[(x + step, y - step)] == 0 and (
+                while self.chessboard[x + step][y - step] == 0 and (
                         self.queenMovePositive[(x + step, y - step)] == 0 or self.queenMovePositive[
                     (x + step, y - step)] > n):
                     self.queenMovePositive[(x + step, y - step)] = n
                     nextCoord.append((x + step, y - step))
                     step += 1
                 step = 1
-                while self.chessboard[(x + step, y)] == 0 and (
+                while self.chessboard[x + step][y] == 0 and (
                         self.queenMovePositive[(x + step, y)] == 0 or self.queenMovePositive[(x + step, y)] > n):
                     self.queenMovePositive[(x + step, y)] = n
                     nextCoord.append((x + step, y))
                     step += 1
                 step = 1
-                while self.chessboard[(x + step, y + step)] == 0 and (
+                while self.chessboard[x + step][y + step] == 0 and (
                         self.queenMovePositive[(x + step, y + step)] == 0 or self.queenMovePositive[
                     (x + step, y + step)] > n):
                     self.queenMovePositive[(x + step, y + step)] = n
@@ -378,20 +378,20 @@ class Evaluator:
                 x = coord[0]
                 y = coord[1]
                 step = 1
-                while self.chessboard[(x - step, y - step)] == 0 and (
+                while self.chessboard[x - step][y - step] == 0 and (
                         self.queenMoveNegative[(x - step, y - step)] == 0 or self.queenMoveNegative[
                     (x - step, y - step)] > n):
                     self.queenMoveNegative[(x - step, y - step)] = n
                     nextCoord.append((x - step, y - step))
                     step += 1
                 step = 1
-                while self.chessboard[(x - step, y)] == 0 and (
+                while self.chessboard[x - step][y] == 0 and (
                         self.queenMoveNegative[(x - step, y)] == 0 or self.queenMoveNegative[(x - step, y)] > n):
                     self.queenMoveNegative[(x - step, y)] = n
                     nextCoord.append((x - step, y))
                     step += 1
                 step = 1
-                while self.chessboard[(x - step, y + step)] == 0 and (
+                while self.chessboard[x - step][y + step] == 0 and (
                         self.queenMoveNegative[(x - step, y + step)] == 0 or self.queenMoveNegative[
                     (x - step, y + step)] > n):
                     self.queenMoveNegative[(x - step, y + step)] = n
@@ -399,33 +399,33 @@ class Evaluator:
                     step += 1
 
                 step = 1
-                while self.chessboard[(x, y - step)] == 0 and (
+                while self.chessboard[x][y - step] == 0 and (
                         self.queenMoveNegative[(x, y - step)] == 0 or self.queenMoveNegative[(x, y - step)] > n):
                     self.queenMoveNegative[(x, y - step)] = n
                     nextCoord.append((x, y - step))
                     step += 1
                 step = 1
-                while self.chessboard[(x, y + step)] == 0 and (
+                while self.chessboard[x][y + step] == 0 and (
                         self.queenMoveNegative[(x, y + step)] == 0 or self.queenMoveNegative[(x, y + step)] > n):
                     self.queenMoveNegative[(x, y + step)] = n
                     nextCoord.append((x, y + step))
                     step += 1
 
                 step = 1
-                while self.chessboard[(x + step, y - step)] == 0 and (
+                while self.chessboard[x + step][y - step] == 0 and (
                         self.queenMoveNegative[(x + step, y - step)] == 0 or self.queenMoveNegative[
                     (x + step, y - step)] > n):
                     self.queenMoveNegative[(x + step, y - step)] = n
                     nextCoord.append((x + step, y - step))
                     step += 1
                 step = 1
-                while self.chessboard[(x + step, y)] == 0 and (
+                while self.chessboard[x + step][y] == 0 and (
                         self.queenMoveNegative[(x + step, y)] == 0 or self.queenMoveNegative[(x + step, y)] > n):
                     self.queenMoveNegative[(x + step, y)] = n
                     nextCoord.append((x + step, y))
                     step += 1
                 step = 1
-                while self.chessboard[(x + step, y + step)] == 0 and (
+                while self.chessboard[x + step][y + step] == 0 and (
                         self.queenMoveNegative[(x + step, y + step)] == 0 or self.queenMoveNegative[
                     (x + step, y + step)] > n):
                     self.queenMoveNegative[(x + step, y + step)] = n
@@ -445,7 +445,7 @@ class Evaluator:
         flag = 1 if self.status == 0 else -1
         for x in range(1, 11):
             for y in range(1, 11):
-                if self.chessboard[(x, y)] == 0:
+                if self.chessboard[x][y] == 0:
                     # 计算t1
                     if self.queenMovePositive[(x, y)] == self.queenMoveNegative[(x, y)]:
                         if self.queenMovePositive[(x, y)] != 0:

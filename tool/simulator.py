@@ -10,16 +10,27 @@ from copy import deepcopy
 
 class Simulator:
     def __init__(self, chessboard, status, chess_coord, simulation_num):
-        self.chessboard = deepcopy(chessboard)
         self.status = status
-        self.chess_coord = chess_coord[:]
         self.simulation_num = simulation_num
         self.win_num = 0
+        self.convert(chessboard,chess_coord)
+
+    # 将二维数组转换为棋盘字典，以及列表坐标
+    def convert(self,chessboard,chess_coord):
+        self.chessboard={}
+        for i in range(12):
+            for j in range(12):
+                self.chessboard[(i,j)]=chessboard[i][j]
+        self.chess_coord=[]
+        for i in range(2):
+            temp=[]
+            for j in range(0,7,2):
+                temp.append(tuple([chess_coord[i][j],chess_coord[i][j+1]]))
+            self.chess_coord.append(temp)
 
     # 棋子的随机移动
     def chessMove(self, chessboard, status, chess_coord):
-        self.result = []
-        if status == 3:
+        if status == 0:
             coord = chess_coord[0][:]
         else:
             coord = chess_coord[1][:]
@@ -128,7 +139,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result.append([lx, ly, x, y, x - d, y - d])
+                    self.result=[lx, ly, x, y, x - d, y - d]
                     break
                 else:
                     direction.remove((-1, -1))
@@ -138,7 +149,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result.append([lx, ly, x, y, x - d, y])
+                    self.result=[lx, ly, x, y, x - d, y]
                     break
                 else:
                     direction.remove((-1, 0))
@@ -148,7 +159,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result.append([lx, ly, x, y, x - d, y + d])
+                    self.result=[lx, ly, x, y, x - d, y + d]
                     break
                 else:
                     direction.remove((-1, 1))
@@ -159,7 +170,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result.append([lx, ly, x, y, x, y - d])
+                    self.result=[lx, ly, x, y, x, y - d]
                     break
                 else:
                     direction.remove((0, -1))
@@ -169,7 +180,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result.append([lx, ly, x, y, x, y + d])
+                    self.result=[lx, ly, x, y, x, y + d]
                     break
                 else:
                     direction.remove((0, 1))
@@ -180,7 +191,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result.append([lx, ly, x, y, x + d, y - d])
+                    self.result=[lx, ly, x, y, x + d, y - d]
                     break
                 else:
                     direction.remove((1, -1))
@@ -190,7 +201,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result.append([lx, ly, x, y, x + d, y])
+                    self.result=[lx, ly, x, y, x + d, y]
                     break
                 else:
                     direction.remove((1, 0))
@@ -200,7 +211,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result.append([lx, ly, x, y, x + d, y + d])
+                    self.result=[lx, ly, x, y, x + d, y + d]
                     break
                 else:
                     direction.remove((1, 1))
@@ -210,21 +221,24 @@ class Simulator:
 
     # 游戏模拟
     def simulate(self):
-        for i in range(self.simulation_num):
-            chessboard = deepcopy(self.chessboard)
-            chess_coord = self.chess_coord[:]
-            status = self.status
-            while self.chessMove(chessboard, status, chess_coord):
-                chessboard[(self.result[2], self.result[3])] = chessboard[(self.result[0], self.result[1])]
-                chessboard[(self.result[0], self.result[1])] = 0
-                chessboard[(self.result[4], self.result[5])] = 1
-                if status == 3:
-                    chess_coord[0].remove((self.result[0], self.result[1]))
-                    chess_coord[0].append((self.result[2], self.result[3]))
-                    status = 4
-                else:
-                    chess_coord[1].remove((self.result[0], self.result[1]))
-                    chess_coord[1].append((self.result[2], self.result[3]))
-                    status = 3
-            if status != self.status:
-                self.win_num += 1
+        try:
+            for i in range(self.simulation_num):
+                chessboard = deepcopy(self.chessboard)
+                chess_coord = self.chess_coord[:]
+                status = self.status
+                while self.chessMove(chessboard, status, chess_coord):
+                    chessboard[(self.result[2], self.result[3])] = chessboard[(self.result[0], self.result[1])]
+                    chessboard[(self.result[0], self.result[1])] = 0
+                    chessboard[(self.result[4], self.result[5])] = 1
+                    if status == False:
+                        chess_coord[0].remove((self.result[0], self.result[1]))
+                        chess_coord[0].append((self.result[2], self.result[3]))
+                        status = True
+                    else:
+                        chess_coord[1].remove((self.result[0], self.result[1]))
+                        chess_coord[1].append((self.result[2], self.result[3]))
+                        status = False
+                if status != self.status:
+                    self.win_num += 1
+        except Exception as e:
+            print(e)
