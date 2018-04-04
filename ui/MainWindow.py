@@ -16,6 +16,7 @@ from PyQt5.QtCore import *
 from gamerule import GameRule
 from gamerecorder import GameRecorder
 from strategy import Strategy
+from simulator import Simulator
 from copy import deepcopy
 
 
@@ -41,6 +42,7 @@ class WorkThread(QThread):
                     self.interFace.currentChess = 3
                 self.interFace.antiThreadFlag = 1
                 self.result = self.interFace.computeData()
+                self.sleep(2)
                 self.returnResult.emit(self.result)
 
 
@@ -58,7 +60,7 @@ class InterFace(QMainWindow):
         self.setMinimumSize(1100, 800)
         self.setWindowTitle("moonlight")
         settings = QSettings("configure", QSettings.NativeFormat)
-        self.status = settings.value("status", 1)
+        self.status = settings.value("status", 3)
         self.mode = settings.value("mode", 2)
         self.gamerecord = GameRecorder()
         self.game = GameRule()
@@ -157,6 +159,19 @@ class InterFace(QMainWindow):
         for i in range(6):
             result.append(strategy.result[i])
         return result
+        # try:
+        #     status=False if self.status==3 else True
+        #     for i, j in zip([0] * 11, range(11)):
+        #         self.chessboard[(i, j)] = 1
+        #         self.chessboard[(11 - i, 11 - j)] = 1
+        #         self.chessboard[(j, 11)] = 1
+        #         self.chessboard[(11 - j, 0)] = 1
+        #     si=Simulator(self.chessboard,status,self.chess_coord,1)
+        #     si.chessMove(self.chessboard,status,self.chess_coord)
+        #     return si.result
+        # except Exception as e:
+        #     print(e)
+
 
     '''
     以下为主线程UI逻辑函数
@@ -594,6 +609,7 @@ class InterFace(QMainWindow):
         self.lastx = x
         self.lasty = y
         return 0
+
 
 
 if __name__ == "__main__":
