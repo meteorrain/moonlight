@@ -10,19 +10,20 @@ from multiprocessing.sharedctypes import RawValue, RawArray
 from multiprocessing import Lock, Process
 from math import sqrt, log
 from movegenerator import MoveGenerator, Node
+from movegenerator_first import MoveGenerator_first
 from simulator import Simulator
 # from simulator1 import Simulator
 from threading import Thread
 from time import time, sleep
 
-child_num = 2200
+child_num = 2300
 node_num = 200000
 UCB_COEF = 1
 simulate_num = 1
-min_visit_num = 10
-max_visit_num = 100000
-time_limit = 5
-process_num = 5
+min_visit_num = 50
+max_visit_num = 1000000
+time_limit = 10
+process_num = 6
 virtual_loss = 2.0
 
 
@@ -96,10 +97,9 @@ class Strategy:
                                                      self.c_chessboard,
                                                      self.c_chess_coord, -1,
                                                      children_num=0)
-
         self.curr_num.value += 1
         test = time()
-        expand(self.state_space, self.curr_num, 0)
+        expand_first(self.state_space, self.curr_num, 0)
         print(self.curr_num.value)
         print("expand()%f" % (time() - test))
         process = []
@@ -122,7 +122,6 @@ class Strategy:
         print(self.time.value/self.test.value)
         site = select_best_node(self.state_space)
         return self.state_space[site].move
-
 
 # 选择收益最佳的子结点
 def select_best_node(state_space):
@@ -193,7 +192,6 @@ def strategy_conduct(lock, depth, state_space, curr_num, test,timet):
                 site = state_space[site].parent
         print("更新%f" % (time() - test4))
 
-
 # 扩展结点
 def expand(state_space, curr_num, location):
     node = state_space[location]
@@ -202,66 +200,15 @@ def expand(state_space, curr_num, location):
     else:
         movegenerator = MoveGenerator(state_space, location, curr_num)
         movegenerator.collectAllMove()
-        # min = 10000
-        # max = -10000
         if node.children_num == 0:
             return True
-        # for move in movegenerator.allMove:
-        #
-        #     executeMove(node, move)
-        #
-        #     move.value = Evaluator(node.chessboard, node.status, node.chess_coord).value
-        #     if move.value > max:
-        #         max = move.value
-        #     if move.value < min:
-        #         min = move.value
-        #
-        #     cancelMove(node, move)
-        # 剪枝公式
-        # threshold = min + (max - min) * 0.618
-        # counter = 0
-        # for move in movegenerator.allMove:
-        #     if counter < child_num:
-        #         if move.value >= threshold:
-        #             executeMove(node, move)
-        #             node.children[node.children_num] = curr_num
-        #             state_space[curr_num.value] = Node(curr_num, 1 - node.status, 0, 0, 0.0, node.blank - 1, False,
-        #                                          node.chessboard, node.chess_coord, node.id, child_num=0, sum_visit=0,
-        #                                          move=(move.last_x,move.last_y,move.x,move.y,move.arr_x,move.arr_y),evaluation=move.value)
-        #
-        #             curr_num.value += 1
-        #             node.children_num += 1
-        #             cancelMove(node, move)
-        #             counter += 1
-        #     else:
-        #         break
-
         node.isExpand = True
 
-
-# 将传入的走法执行在棋盘上
-def executeMove(node, move):
-    node.chessboard[move.x][move.y] = node.chessboard[move.last_x][move.last_y]
-    node.chessboard[move.last_x][move.last_y] = 0
-    node.chessboard[move.arr_x][move.arr_y] = 1
-    for i in range(0, 7, 2):
-        if node.chess_coord[node.status][i] == move.last_x:
-            node.chess_coord[node.status][i] = move.x
-            node.chess_coord[node.status][i + 1] = move.y
-            break
-
-
-# 将传入的走法在棋盘上取消
-def cancelMove(node, move):
-    for i in range(0, 7, 2):
-        if node.chess_coord[node.status][i] == move.x:
-            node.chess_coord[node.status][i] = move.last_x
-            node.chess_coord[node.status][i + 1] = move.last_y
-            break
-    node.chessboard[move.last_x][move.last_y] = node.chessboard[move.x][move.y]
-    node.chessboard[move.x][move.y] = 0
-    node.chessboard[move.arr_x][move.arr_y] = 0
-
+# 首次完全扩展
+def expand_first(state_space, curr_num, location):
+    state_space[location].isExpand = True
+    movegenerator = MoveGenerator_first(state_space, location, curr_num)
+    movegenerator.collectAllMove()
 
 # 递归选择UCB值最大的叶结点
 def select_node(state_space, location):
