@@ -4,32 +4,31 @@
 # @definition:
 from math import *
 
+
 class Evaluator:
     def __init__(self, chessboard, status, chess_coord):
         self.status = status
-        # self.chessboard = chessboard
-        # self.chess_coord = chess_coord
-        # self.kingMovePositive = {}
-        # self.kingMoveNegative = {}
+        self.chessboard = chessboard
+        self.chess_coord = chess_coord
+        self.kingMovePositive = {}
+        self.kingMoveNegative = {}
         self.queenMovePositive = {}
         self.queenMoveNegative = {}
-        self.convert(chessboard,chess_coord)
-        # self.kingTraverse()
-        # self.queenTraverse()
-        self.queenTraverse1()
+        self.convert(chessboard, chess_coord)
+        self.kingTraverse()
+        self.queenTraverse()
         self.computeValue()
 
-
-    def convert(self,chessboard,chess_coord):
-        self.chessboard={}
+    def convert(self, chessboard, chess_coord):
+        self.chessboard = {}
         for i in range(12):
             for j in range(12):
-                self.chessboard[(i,j)]=chessboard[i][j]
-        self.chess_coord=[]
+                self.chessboard[(i, j)] = chessboard[i][j]
+        self.chess_coord = []
         for i in range(2):
-            temp=[]
-            for j in range(0,7,2):
-                temp.append(tuple([chess_coord[i][j],chess_coord[i][j+1]]))
+            temp = []
+            for j in range(0, 7, 2):
+                temp.append(tuple([chess_coord[i][j], chess_coord[i][j + 1]]))
             self.chess_coord.append(temp)
 
     # 国王移动法棋盘估值
@@ -448,126 +447,13 @@ class Evaluator:
             NegativeCollect.clear()
             NegativeCollect = nextCoord[:]
 
-    def queenTraverse1(self):
-        for x in range(1, 11):
-            for y in range(1, 11):
-                self.queenMovePositive[(x, y)] = 0
-                self.queenMoveNegative[(x, y)] = 0
-
-        for coord in self.chess_coord[0]:
-            x = coord[0]
-            y = coord[1]
-            step = 1
-            while self.chessboard[(x - step, y - step)] == 0:
-                if self.queenMovePositive[(x - step, y - step)] == 0:
-                    self.queenMovePositive[(x - step, y - step)] = 1
-
-                step += 1
-            step = 1
-            while self.chessboard[(x - step, y)] == 0:
-                if self.queenMovePositive[(x - step, y)] == 0:
-                    self.queenMovePositive[(x - step, y)] = 1
-
-                step += 1
-            step = 1
-            while self.chessboard[(x - step, y + step)] == 0:
-                if self.queenMovePositive[(x - step, y + step)] == 0:
-                    self.queenMovePositive[(x - step, y + step)] = 1
-
-                step += 1
-
-            step = 1
-            while self.chessboard[(x, y - step)] == 0:
-                if self.queenMovePositive[(x, y - step)] == 0:
-                    self.queenMovePositive[(x, y - step)] = 1
-
-                step += 1
-            step = 1
-            while self.chessboard[(x, y + step)] == 0:
-                if self.queenMovePositive[(x, y + step)] == 0:
-                    self.queenMovePositive[(x, y + step)] = 1
-
-                step += 1
-
-            step = 1
-            while self.chessboard[(x + step, y - step)] == 0:
-                if self.queenMovePositive[(x + step, y - step)] == 0:
-                    self.queenMovePositive[(x + step, y - step)] = 1
-
-                step += 1
-            step = 1
-            while self.chessboard[(x + step, y)] == 0:
-                if self.queenMovePositive[(x + step, y)] == 0:
-                    self.queenMovePositive[(x + step, y)] = 1
-
-                step += 1
-            step = 1
-            while self.chessboard[(x + step, y + step)] == 0:
-                if self.queenMovePositive[(x + step, y + step)] == 0:
-                    self.queenMovePositive[(x + step, y + step)] = 1
-
-                step += 1
-
-        for coord in self.chess_coord[1]:
-            x = coord[0]
-            y = coord[1]
-            step = 1
-            while self.chessboard[(x - step, y - step)] == 0:
-                if self.queenMoveNegative[(x - step, y - step)] == 0:
-                    self.queenMoveNegative[(x - step, y - step)] = 1
-
-                step += 1
-            step = 1
-            while self.chessboard[(x - step, y)] == 0:
-                if self.queenMoveNegative[(x - step, y)] == 0:
-                    self.queenMoveNegative[(x - step, y)] = 1
-
-                step += 1
-            step = 1
-            while self.chessboard[(x - step, y + step)] == 0:
-                if self.queenMoveNegative[(x - step, y + step)] == 0:
-                    self.queenMoveNegative[(x - step, y + step)] = 1
-
-                step += 1
-
-            step = 1
-            while self.chessboard[(x, y - step)] == 0:
-                if self.queenMoveNegative[(x, y - step)] == 0:
-                    self.queenMoveNegative[(x, y - step)] = 1
-
-                step += 1
-            step = 1
-            while self.chessboard[(x, y + step)] == 0:
-                if self.queenMoveNegative[(x, y + step)] == 0:
-                    self.queenMoveNegative[(x, y + step)] = 1
-
-                step += 1
-
-            step = 1
-            while self.chessboard[(x + step, y - step)] == 0:
-                if self.queenMoveNegative[(x + step, y - step)] == 0:
-                    self.queenMoveNegative[(x + step, y - step)] = 1
-
-                step += 1
-            step = 1
-            while self.chessboard[(x + step, y)] == 0:
-                if self.queenMoveNegative[(x + step, y)] == 0:
-                    self.queenMoveNegative[(x + step, y)] = 1
-
-                step += 1
-            step = 1
-            while self.chessboard[(x + step, y + step)] == 0:
-                if self.queenMoveNegative[(x + step, y + step)] == 0:
-                    self.queenMoveNegative[(x + step, y + step)] = 1
-
-                step += 1
     # 计算估值
     def computeValue(self):
         t1 = 0
-        # t2 = 0
-        # c1 = 0
-        # c2 = 0
-        # w = 0
+        t2 = 0
+        c1 = 0
+        c2 = 0
+        w = 0
         flag = 1 if self.status == 0 else -1
         for x in range(1, 11):
             for y in range(1, 11):
@@ -586,68 +472,66 @@ class Evaluator:
                             t1 += flag
                         else:
                             t1 -= flag
-                    # # 计算t2
-                    # if self.kingMovePositive[(x, y)] == self.kingMoveNegative[(x, y)]:
-                    #     if self.kingMovePositive[(x, y)] != 0:
-                    #         t2 += 0.1
-                    # elif self.kingMovePositive[(x, y)] < self.kingMoveNegative[(x, y)]:
-                    #     if self.kingMovePositive[(x, y)] == 0:
-                    #         t2 -= flag
-                    #     else:
-                    #         t2 += flag
-                    # else:
-                    #     if self.kingMoveNegative[(x, y)] == 0:
-                    #         t2 += flag
-                    #     else:
-                    #         t2 -= flag
+                    # 计算t2
+                    if self.kingMovePositive[(x, y)] == self.kingMoveNegative[(x, y)]:
+                        if self.kingMovePositive[(x, y)] != 0:
+                            t2 += 0.1
+                    elif self.kingMovePositive[(x, y)] < self.kingMoveNegative[(x, y)]:
+                        if self.kingMovePositive[(x, y)] == 0:
+                            t2 -= flag
+                        else:
+                            t2 += flag
+                    else:
+                        if self.kingMoveNegative[(x, y)] == 0:
+                            t2 += flag
+                        else:
+                            t2 -= flag
                     # 计算c1
-                    # if self.queenMovePositive[(x, y)] != 0 and self.queenMoveNegative[(x, y)] != 0:
-                    #     if flag == 1:
-                    #         c1 += pow(2, -self.queenMovePositive[(x, y)]) - pow(2, -self.queenMoveNegative[(x, y)])
-                    #     else:
-                    #         c1 += pow(2, -self.queenMoveNegative[(x, y)]) - pow(2, -self.queenMovePositive[(x, y)])
-                    #     # 计算w
-                    #     w += pow(2, -fabs(self.queenMovePositive[(x, y)] - self.queenMoveNegative[(x, y)]))
-                    # elif self.queenMovePositive[(x, y)] == 0 and self.queenMoveNegative[(x, y)] != 0:
-                    #     if flag == 1:
-                    #         c1 += 1 - pow(2, -self.queenMoveNegative[(x, y)])
-                    #     else:
-                    #         c1 += pow(2, -self.queenMoveNegative[(x, y)]) - 1
-                    # elif self.queenMovePositive[(x, y)] != 0 and self.queenMoveNegative[(x, y)] == 0:
-                    #     if flag == 1:
-                    #         c1 += pow(2, -self.queenMovePositive[(x, y)]) - 1
-                    #     else:
-                    #         c1 += 1 - pow(2, -self.queenMovePositive[(x, y)])
-                    # # 计算c2
-                    # if self.kingMovePositive[(x, y)] != 0 and self.kingMoveNegative[(x, y)] != 0:
-                    #     if flag == 1:
-                    #         delta = (self.kingMovePositive[(x, y)] - self.kingMoveNegative[(x, y)]) / 6
-                    #     else:
-                    #         delta = (self.kingMoveNegative[(x, y)] - self.kingMovePositive[(x, y)]) / 6
-                    #     c2 += min(1, max(-1, delta))
-                    # elif self.kingMovePositive[(x, y)] == 0 and self.kingMoveNegative[(x, y)] != 0:
-                    #     if flag == 1:
-                    #         delta = - self.kingMoveNegative[(x, y)] / 6
-                    #         c2 += max(-1, delta)
-                    #     else:
-                    #         delta = self.kingMoveNegative[(x, y)] / 6
-                    #         c2 += min(1, delta)
-                    # elif self.kingMovePositive[(x, y)] != 0 and self.kingMoveNegative[(x, y)] == 0:
-                    #     if flag == 1:
-                    #         delta = self.kingMovePositive[(x, y)] / 6
-                    #         c2 += min(1, delta)
-                    #     else:
-                    #         delta = -self.kingMovePositive[(x, y)] / 6
-                    #         c2 += max(-1, delta)
+                    if self.queenMovePositive[(x, y)] != 0 and self.queenMoveNegative[(x, y)] != 0:
+                        if flag == 1:
+                            c1 += pow(2, -self.queenMovePositive[(x, y)]) - pow(2, -self.queenMoveNegative[(x, y)])
+                        else:
+                            c1 += pow(2, -self.queenMoveNegative[(x, y)]) - pow(2, -self.queenMovePositive[(x, y)])
+                        # 计算w
+                        w += pow(2, -fabs(self.queenMovePositive[(x, y)] - self.queenMoveNegative[(x, y)]))
+                    elif self.queenMovePositive[(x, y)] == 0 and self.queenMoveNegative[(x, y)] != 0:
+                        if flag == 1:
+                            c1 += 1 - pow(2, -self.queenMoveNegative[(x, y)])
+                        else:
+                            c1 += pow(2, -self.queenMoveNegative[(x, y)]) - 1
+                    elif self.queenMovePositive[(x, y)] != 0 and self.queenMoveNegative[(x, y)] == 0:
+                        if flag == 1:
+                            c1 += pow(2, -self.queenMovePositive[(x, y)]) - 1
+                        else:
+                            c1 += 1 - pow(2, -self.queenMovePositive[(x, y)])
+                    # 计算c2
+                    if self.kingMovePositive[(x, y)] != 0 and self.kingMoveNegative[(x, y)] != 0:
+                        if flag == 1:
+                            delta = (self.kingMovePositive[(x, y)] - self.kingMoveNegative[(x, y)]) / 6
+                        else:
+                            delta = (self.kingMoveNegative[(x, y)] - self.kingMovePositive[(x, y)]) / 6
+                        c2 += min(1, max(-1, delta))
+                    elif self.kingMovePositive[(x, y)] == 0 and self.kingMoveNegative[(x, y)] != 0:
+                        if flag == 1:
+                            delta = - self.kingMoveNegative[(x, y)] / 6
+                            c2 += max(-1, delta)
+                        else:
+                            delta = self.kingMoveNegative[(x, y)] / 6
+                            c2 += min(1, delta)
+                    elif self.kingMovePositive[(x, y)] != 0 and self.kingMoveNegative[(x, y)] == 0:
+                        if flag == 1:
+                            delta = self.kingMovePositive[(x, y)] / 6
+                            c2 += min(1, delta)
+                        else:
+                            delta = -self.kingMovePositive[(x, y)] / 6
+                            c2 += max(-1, delta)
 
-        # c1 *= 2
-        # # 此公式有待优化
-        # a = 5 / (w + 5)
-        # b = (w / (w + 20)) / 2
-        # c = (1 - (a + b)) / 4
-        # self.value = a * t1 + b * t2 + c * (c1 + c2)
-        # self.value=0.6*t1+0.4*t2
-        self.value=t1
+        c1 *= 2
+        # 此公式有待优化
+        a = 5 / (w + 5)
+        b = (w / (w + 20)) / 2
+        c = (1 - (a + b)) / 4
+        self.value = a * t1 + b * t2 + c * (c1 + c2)
         '''
         
         # 书上的公式

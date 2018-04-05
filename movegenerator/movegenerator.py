@@ -7,7 +7,8 @@
 from random import randrange
 from ctypes import Structure, c_double, c_int, c_bool
 
-child_num=2300
+child_num = 2300
+
 
 # 结点结构体的定义
 class Node(Structure):
@@ -24,6 +25,7 @@ class Node(Structure):
                 ("children", c_int * child_num),
                 ("children_num", c_int),
                 ("move", c_int * 6)]
+
 
 class MoveGenerator:
     def __init__(self, state_space, location, curr_num):
@@ -94,7 +96,6 @@ class MoveGenerator:
             self.expand(lx, ly, x, y, x - step, y + step)
             step += 1
 
-
         step = 1
         while self.chessboard[x][y - step] == 0:
             self.expand(lx, ly, x, y, x, y - step)
@@ -104,7 +105,6 @@ class MoveGenerator:
         while self.chessboard[x][y + step] == 0:
             self.expand(lx, ly, x, y, x, y + step)
             step += 1
-
 
         step = 1
         while self.chessboard[x + step][y - step] == 0:
@@ -121,7 +121,6 @@ class MoveGenerator:
 
         self.chessboard[lx][ly] = self.chessboard[x][y]
         self.chessboard[x][y] = 0
-
 
     def expand(self, last_x, last_y, x, y, arr_x, arr_y):
         node = self.state_space[self.location]

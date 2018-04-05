@@ -17,19 +17,19 @@ class Simulator:
         self.win_num = 0
         # self.chessboard=chessboard
         # self.chess_coord=chess_coord
-        self.convert(chessboard,chess_coord)
+        self.convert(chessboard, chess_coord)
 
     # 将二维数组转换为棋盘字典，以及列表坐标
-    def convert(self,chessboard,chess_coord):
-        self.chessboard={}
+    def convert(self, chessboard, chess_coord):
+        self.chessboard = {}
         for i in range(12):
             for j in range(12):
-                self.chessboard[(i,j)]=chessboard[i][j]
-        self.chess_coord=[]
+                self.chessboard[(i, j)] = chessboard[i][j]
+        self.chess_coord = []
         for i in range(2):
-            temp=[]
-            for j in range(0,7,2):
-                temp.append(tuple([chess_coord[i][j],chess_coord[i][j+1]]))
+            temp = []
+            for j in range(0, 7, 2):
+                temp.append(tuple([chess_coord[i][j], chess_coord[i][j + 1]]))
             self.chess_coord.append(temp)
 
     # 棋子的随机移动
@@ -38,19 +38,19 @@ class Simulator:
             coord = chess_coord[0][:]
         else:
             coord = chess_coord[1][:]
-        coord_num=4
+        coord_num = 4
         # t1=time()
         while coord_num:
             select_coord = choice(coord)
             x = select_coord[0]
             y = select_coord[1]
             direction = []
-            for i,j in zip([-1,-1,-1,0,0,1,1,1],[-1,0,1,-1,1,-1,0,1]):
-                if chessboard[(x+i,y+j)]==0:
-                    direction.append((i,j))
-            if len(direction)==0:
+            for i, j in zip([-1, -1, -1, 0, 0, 1, 1, 1], [-1, 0, 1, -1, 1, -1, 0, 1]):
+                if chessboard[(x + i, y + j)] == 0:
+                    direction.append((i, j))
+            if len(direction) == 0:
                 coord.remove(select_coord)
-                coord_num-=1
+                coord_num -= 1
             else:
                 # t2=time()
                 select_direct = choice(direction)
@@ -116,7 +116,6 @@ class Simulator:
                 # print("小循环%.20f" % (t3 - t2))
                 return True
 
-
         # t4=time()
         # print("大循环%.20f"%(t4-t1))
         return False
@@ -137,21 +136,21 @@ class Simulator:
             while chessboard[(x - step, y - step)] == 0:
                 step += 1
             d = randrange(1, step)
-            self.result=[lx, ly, x, y, x - d, y - d]
+            self.result = [lx, ly, x, y, x - d, y - d]
 
         elif select_direct == (-1, 0):
             step = 1
             while chessboard[(x - step, y)] == 0:
                 step += 1
             d = randrange(1, step)
-            self.result=[lx, ly, x, y, x - d, y]
+            self.result = [lx, ly, x, y, x - d, y]
 
         elif select_direct == (-1, 1):
             step = 1
             while chessboard[(x - step, y + step)] == 0:
                 step += 1
             d = randrange(1, step)
-            self.result=[lx, ly, x, y, x - d, y + d]
+            self.result = [lx, ly, x, y, x - d, y + d]
 
 
         elif select_direct == (0, -1):
@@ -159,14 +158,14 @@ class Simulator:
             while chessboard[(x, y - step)] == 0:
                 step += 1
             d = randrange(1, step)
-            self.result=[lx, ly, x, y, x, y - d]
+            self.result = [lx, ly, x, y, x, y - d]
 
         elif select_direct == (0, 1):
             step = 1
             while chessboard[(x, y + step)] == 0:
                 step += 1
             d = randrange(1, step)
-            self.result=[lx, ly, x, y, x, y + d]
+            self.result = [lx, ly, x, y, x, y + d]
 
 
         elif select_direct == (1, -1):
@@ -174,21 +173,21 @@ class Simulator:
             while chessboard[(x + step, y - step)] == 0:
                 step += 1
             d = randrange(1, step)
-            self.result=[lx, ly, x, y, x + d, y - d]
+            self.result = [lx, ly, x, y, x + d, y - d]
 
         elif select_direct == (1, 0):
             step = 1
             while chessboard[(x + step, y)] == 0:
                 step += 1
             d = randrange(1, step)
-            self.result=[lx, ly, x, y, x + d, y]
+            self.result = [lx, ly, x, y, x + d, y]
 
         elif select_direct == (1, 1):
             step = 1
             while chessboard[(x + step, y + step)] == 0:
                 step += 1
             d = randrange(1, step)
-            self.result=[lx, ly, x, y, x + d, y + d]
+            self.result = [lx, ly, x, y, x + d, y + d]
 
         chessboard[(lx, ly)] = chessboard[(x, y)]
         chessboard[(x, y)] = 0
@@ -223,9 +222,10 @@ class Simulator:
         except Exception as e:
             print(e)
 
-if __name__=='__main__':
-    chessboard={}
-    chess_coord=[[],[]]
+
+if __name__ == '__main__':
+    chessboard = {}
+    chess_coord = [[], []]
     for x in range(1, 11):
         for y in range(1, 11):
             if x == 1 and y == 4 or x == 4 and y == 1 or x == 7 and y == 1 or x == 10 and y == 4:
@@ -241,6 +241,6 @@ if __name__=='__main__':
         chessboard[(11 - i, 11 - j)] = 1
         chessboard[(j, 11)] = 1
         chessboard[(11 - j, 0)] = 1
-    si=Simulator(chessboard,False,chess_coord,2000)
+    si = Simulator(chessboard, False, chess_coord, 2000)
     si.simulate()
     # print(si.win_num)

@@ -154,8 +154,8 @@ class InterFace(QMainWindow):
 
     # 电脑搜索走法函数
     def computeData(self):
-        strategy=Strategy(self.chessboard,self.status,self.chess_coord,self.blank)
-        result=[]
+        strategy = Strategy(self.chessboard, self.status, self.chess_coord, self.blank)
+        result = []
         for i in range(6):
             result.append(strategy.result[i])
         return result
@@ -171,7 +171,6 @@ class InterFace(QMainWindow):
         #     return si.result
         # except Exception as e:
         #     print(e)
-
 
     '''
     以下为主线程UI逻辑函数
@@ -609,7 +608,6 @@ class InterFace(QMainWindow):
         self.lastx = x
         self.lasty = y
         return 0
-
 
 
 if __name__ == "__main__":

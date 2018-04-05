@@ -20,10 +20,10 @@ child_num = 2300
 node_num = 200000
 UCB_COEF = 1
 simulate_num = 1
-min_visit_num = 50
+min_visit_num = 20
 max_visit_num = 1000000
-time_limit = 10
-process_num = 6
+time_limit = 5
+process_num = 5
 virtual_loss = 2.0
 
 
@@ -59,7 +59,7 @@ class Strategy:
         self.curr_num = RawValue(c_int, 0)
         self.max_depth = RawValue(c_int, 0)
         self.test = RawValue(c_int, 0)
-        self.time=RawValue(c_double,0.0)
+        self.time = RawValue(c_double, 0.0)
         self.result = self.getResult()
 
     # 棋盘外加保护边界用于估值以及走法生成
@@ -108,7 +108,7 @@ class Strategy:
             process.append(
                 # Process(target=strategy_conduct, args=(lock, self.max_depth, self.state_space, self.curr_num)))
                 Process(target=strategy_conduct,
-                        args=(lock, self.max_depth, self.state_space, self.curr_num, self.test,self.time)))
+                        args=(lock, self.max_depth, self.state_space, self.curr_num, self.test, self.time)))
         for i in range(process_num):
             process[i].start()
         counter = Count_time(process, process_num)
@@ -116,12 +116,20 @@ class Strategy:
         counter.join(time_limit)
         for i in range(process_num):
             process[i].terminate()
+        print(self.state_space[0].children_num)
+        try:
+            for i in range(self.state_space[0].children_num):
+                print(self.state_space[self.state_space[0].children[i]].visit_num)
+                print(self.state_space[self.state_space[0].children[i]].value)
+        except Exception as e:
+            print(e)
         print(self.state_space[0].visit_num)
         print(self.max_depth.value)
         print(self.test.value)
-        print(self.time.value/self.test.value)
+        print(self.time.value / self.test.value)
         site = select_best_node(self.state_space)
         return self.state_space[site].move
+
 
 # 选择收益最佳的子结点
 def select_best_node(state_space):
@@ -137,7 +145,7 @@ def select_best_node(state_space):
 
 # 执行策略
 # def strategy_conduct(lock, depth, state_space, curr_num):
-def strategy_conduct(lock, depth, state_space, curr_num, test,timet):
+def strategy_conduct(lock, depth, state_space, curr_num, test, timet):
     while True:
         test.value += 1
         if state_space[0].visit_num > max_visit_num:
@@ -154,7 +162,7 @@ def strategy_conduct(lock, depth, state_space, curr_num, test,timet):
         test2 = time()
         print("选择%f" % (test2 - test1))
         # 扩展节点
-        if state_space[site].visit_num >= min_visit_num:
+        if state_space[site].visit_num >= min_visit_num + process_num + 2:
             with lock:
                 flag = expand(state_space, curr_num, site)
             if flag == None:
@@ -173,42 +181,46 @@ def strategy_conduct(lock, depth, state_space, curr_num, test,timet):
         simulate.simulate()
 
         test4 = time()
-        x=test4 - test3
-        print("模拟%f" % (x))
-        timet.value+=x
+
         # 回溯更新
+        # if simulate.win_num == 1:
+        #     while site != -1:
+        #         with lock:
+        #             state_space[site].visit_num += 1
+        #             state_space[site].win_num += 1
+        #             state_space[site].value = state_space[site].win_num / state_space[site].visit_num
+        #         site = state_space[site].parent
+        # else:
+        #     while site != -1:
+        #         with lock:
+        #             state_space[site].visit_num += 1
+        #             state_space[site].value = state_space[site].win_num / state_space[site].visit_num
+        #         site = state_space[site].parent
         if simulate.win_num == 1:
-            while site != -1:
-                with lock:
+            with lock:
+                while site != -1:
                     state_space[site].visit_num += 1
                     state_space[site].win_num += 1
                     state_space[site].value = state_space[site].win_num / state_space[site].visit_num
-                site = state_space[site].parent
+                    site = state_space[site].parent
         else:
-            while site != -1:
-                with lock:
+            with lock:
+                while site != -1:
                     state_space[site].visit_num += 1
                     state_space[site].value = state_space[site].win_num / state_space[site].visit_num
-                site = state_space[site].parent
-        print("更新%f" % (time() - test4))
+                    site = state_space[site].parent
+        x = time() - test4
+        print("更新%f" % (x))
+        timet.value += x
+        # print("更新%f" % (time() - test4))
 
-# 扩展结点
-def expand(state_space, curr_num, location):
-    node = state_space[location]
-    if node.isExpand:
-        return False
-    else:
-        movegenerator = MoveGenerator(state_space, location, curr_num)
-        movegenerator.collectAllMove()
-        if node.children_num == 0:
-            return True
-        node.isExpand = True
 
 # 首次完全扩展
 def expand_first(state_space, curr_num, location):
     state_space[location].isExpand = True
     movegenerator = MoveGenerator_first(state_space, location, curr_num)
     movegenerator.collectAllMove()
+
 
 # 递归选择UCB值最大的叶结点
 def select_node(state_space, location):
@@ -226,3 +238,16 @@ def select_node(state_space, location):
             max_ucb = ucb
             result = site
     return result
+
+
+# 扩展结点（随机剪枝）
+def expand(state_space, curr_num, location):
+    node = state_space[location]
+    if node.isExpand:
+        return False
+    else:
+        movegenerator = MoveGenerator(state_space, location, curr_num)
+        movegenerator.collectAllMove()
+        if node.children_num == 0:
+            return True
+        node.isExpand = True

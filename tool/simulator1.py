@@ -16,19 +16,19 @@ class Simulator:
         self.win_num = 0
         # self.chessboard = chessboard
         # self.chess_coord = chess_coord
-        self.convert(chessboard,chess_coord)
+        self.convert(chessboard, chess_coord)
 
     # 将二维数组转换为棋盘字典，以及列表坐标
-    def convert(self,chessboard,chess_coord):
-        self.chessboard={}
+    def convert(self, chessboard, chess_coord):
+        self.chessboard = {}
         for i in range(12):
             for j in range(12):
-                self.chessboard[(i,j)]=chessboard[i][j]
-        self.chess_coord=[]
+                self.chessboard[(i, j)] = chessboard[i][j]
+        self.chess_coord = []
         for i in range(2):
-            temp=[]
-            for j in range(0,7,2):
-                temp.append(tuple([chess_coord[i][j],chess_coord[i][j+1]]))
+            temp = []
+            for j in range(0, 7, 2):
+                temp.append(tuple([chess_coord[i][j], chess_coord[i][j + 1]]))
             self.chess_coord.append(temp)
 
     # 棋子的随机移动
@@ -149,7 +149,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result=[lx, ly, x, y, x - d, y - d]
+                    self.result = [lx, ly, x, y, x - d, y - d]
                     break
                 else:
                     direction.remove((-1, -1))
@@ -159,7 +159,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result=[lx, ly, x, y, x - d, y]
+                    self.result = [lx, ly, x, y, x - d, y]
                     break
                 else:
                     direction.remove((-1, 0))
@@ -169,7 +169,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result=[lx, ly, x, y, x - d, y + d]
+                    self.result = [lx, ly, x, y, x - d, y + d]
                     break
                 else:
                     direction.remove((-1, 1))
@@ -180,7 +180,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result=[lx, ly, x, y, x, y - d]
+                    self.result = [lx, ly, x, y, x, y - d]
                     break
                 else:
                     direction.remove((0, -1))
@@ -190,7 +190,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result=[lx, ly, x, y, x, y + d]
+                    self.result = [lx, ly, x, y, x, y + d]
                     break
                 else:
                     direction.remove((0, 1))
@@ -201,7 +201,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result=[lx, ly, x, y, x + d, y - d]
+                    self.result = [lx, ly, x, y, x + d, y - d]
                     break
                 else:
                     direction.remove((1, -1))
@@ -211,7 +211,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result=[lx, ly, x, y, x + d, y]
+                    self.result = [lx, ly, x, y, x + d, y]
                     break
                 else:
                     direction.remove((1, 0))
@@ -221,7 +221,7 @@ class Simulator:
                     step += 1
                 if step > 1:
                     d = randrange(1, step)
-                    self.result=[lx, ly, x, y, x + d, y + d]
+                    self.result = [lx, ly, x, y, x + d, y + d]
                     break
                 else:
                     direction.remove((1, 1))
@@ -259,9 +259,10 @@ class Simulator:
         except Exception as e:
             print(e)
 
-if __name__=='__main__':
-    chessboard={}
-    chess_coord=[[],[]]
+
+if __name__ == '__main__':
+    chessboard = {}
+    chess_coord = [[], []]
     for x in range(1, 11):
         for y in range(1, 11):
             if x == 1 and y == 4 or x == 4 and y == 1 or x == 7 and y == 1 or x == 10 and y == 4:
@@ -277,5 +278,5 @@ if __name__=='__main__':
         chessboard[(11 - i, 11 - j)] = 1
         chessboard[(j, 11)] = 1
         chessboard[(11 - j, 0)] = 1
-    si=Simulator(chessboard,False,chess_coord,2000)
+    si = Simulator(chessboard, False, chess_coord, 2000)
     si.simulate()

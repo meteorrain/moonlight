@@ -5,6 +5,7 @@
 #
 from movegenerator import Node
 
+
 class MoveGenerator_first:
     def __init__(self, state_space, location, curr_num):
         self.chessboard = state_space[location].chessboard
@@ -74,7 +75,6 @@ class MoveGenerator_first:
             self.expand(lx, ly, x, y, x - step, y + step)
             step += 1
 
-
         step = 1
         while self.chessboard[x][y - step] == 0:
             self.expand(lx, ly, x, y, x, y - step)
@@ -84,7 +84,6 @@ class MoveGenerator_first:
         while self.chessboard[x][y + step] == 0:
             self.expand(lx, ly, x, y, x, y + step)
             step += 1
-
 
         step = 1
         while self.chessboard[x + step][y - step] == 0:
