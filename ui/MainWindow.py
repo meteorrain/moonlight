@@ -3,21 +3,44 @@
 # @time： 2018/2/25
 # @author: RuiQing Chen
 # @definition:mode: 1——人人  2——人机  3——机机
-#             status: 1——人（正方）  2——人（反方）  3——机（正方）  4——机（反方）  5——暂停  6——停止
+#             status: 1——人（正方）  2——人（反方）  3——机（正方）  4——机（反方）
 #             clicktimes:控制棋局中鼠标点击次数
 #             times:控制工具栏的显示
 
 import sys
-import time
-
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from gamerule import GameRule
 from gamerecorder import GameRecorder
 from strategy import Strategy
+from threading import Thread
 from simulator import Simulator
 from copy import deepcopy
+from time import time, sleep
+from socket import socket, AF_INET, SOCK_DGRAM
+from json import dumps, loads
+
+time_limit = int(QSettings('configure', QSettings.IniFormat).value('time_limit', 10))
+
+
+# 等待所有进程结束
+class Count_time(Thread):
+    def __init__(self, interface, socket, address):
+        super(Count_time, self).__init__()
+        self.interface = interface
+        self.socket = socket
+        self.address = address
+
+    def run(self):
+        start = time()
+        while True:
+            curr_time = time()
+            if self.interface.stop_flag == True or curr_time - start > time_limit:
+                string = 'stop'
+                self.socket.sendto(string.encode(encoding='utf-8'), self.address)
+                break
+            sleep(0.5)
 
 
 # 用于显示电脑招数的线程
@@ -32,18 +55,27 @@ class WorkThread(QThread):
     def run(self):
         while True:
             self.sleep(0.5)  # 子线程每隔0.5秒查询一次
-            if (self.interFace.mode == 2 or self.interFace.mode == 3) \
-                    and (
-                    self.interFace.status == 3 or self.interFace.status == 4) and self.interFace.antiThreadFlag == 0:
-                pass
-                if self.interFace.status == 3:
-                    self.interFace.currentChess = 2
-                else:
-                    self.interFace.currentChess = 3
-                self.interFace.antiThreadFlag = 1
-                self.result = self.interFace.computeData()
-                self.sleep(2)
-                self.returnResult.emit(self.result)
+            if self.interFace.start_flag == True:
+                if (self.interFace.mode == 2 or self.interFace.mode == 3) \
+                        and (
+                        self.interFace.status == 3 or self.interFace.status == 4) and self.interFace.antiThreadFlag == 0:
+                    self.interFace.Prohibit.setEnabled(True)
+                    self.interFace.set_left_disable()
+                    self.interFace.set_right_disable()
+
+                    if self.interFace.status == 3:
+                        self.interFace.currentChess = 2
+                    else:
+                        self.interFace.currentChess = 3
+                    self.interFace.antiThreadFlag = 1
+                    self.result = self.interFace.computeData()
+                    self.sleep(2)
+                    self.returnResult.emit(self.result)
+
+                    self.interFace.set_left_enable()
+                    self.interFace.set_right_disable()
+                    self.interFace.gamerecord.clear_history()
+                    self.interFace.Prohibit.setEnabled(False)
 
 
 # 主窗口
@@ -59,21 +91,26 @@ class InterFace(QMainWindow):
         self.setSizePolicy(sizePolicy)
         self.setMinimumSize(1100, 800)
         self.setWindowTitle("moonlight")
-        settings = QSettings("configure", QSettings.NativeFormat)
-        self.status = settings.value("status", 3)
-        self.mode = settings.value("mode", 2)
+        self.settings = QSettings("configure", QSettings.IniFormat)
+
         self.gamerecord = GameRecorder()
         self.game = GameRule()
-        self.initBoard()
         self.menuLayout()
         self.toolLayout()
-        self.displayBoard()
+        self.labelList = []
+        self.labelList_used = []
+        # 生成100个待用QLabel作为障碍备用
+        self.centralwidget = QWidget(self)
+        self.setCentralWidget(self.centralwidget)
+        self.chess = QLabel(self.centralwidget)
+        for i in range(100):
+            self.labelList.append(QLabel(self.chess))
+        self.initBoard()
         self.center()
-        if self.mode == 2 or self.mode == 3:
-            self.workthread = WorkThread(self)
-            self.workthread.returnResult.connect(self.threadConduct)
-            self.antiThreadFlag = 0  # 开启子线程响应
-            self.workthread.start()
+        self.start_flag = False
+        self.stop_flag = False
+        self.antimouse = 1
+        self.run_status = 0
 
     '''
     以下为子线程获取电脑走法的界面显示函数
@@ -93,6 +130,11 @@ class InterFace(QMainWindow):
         self.threadChessMove(result[0], result[1], result[2], result[3])
         self.chessboard[(result[4], result[5])] = 1
         self.blank -= 1
+        for i in range(6):
+            self.gamerecord.currentMove.append(result[i])
+        self.gamerecord.currentChessBroad = deepcopy(self.chessboard)
+        self.gamerecord.storeMove()
+        self.gamerecord.storeChessBoard()
         self.threadShootArrow(result[2], result[3], result[4], result[5])
         self.antimouse = 1
         self.sequentAnimation.start()
@@ -113,9 +155,9 @@ class InterFace(QMainWindow):
         offset = self.chess.width() / 12
         list = self.chess.childAt(QPoint(lx * offset + 2, (11 - ly) * offset + 2))
         if self.currentChess == 2:
-            list.setPixmap(QPixmap("./images/chess_white.png"))
+            list.setPixmap(QPixmap("./images/%s.png" % (str(self.settings.value('plus', 'chess_white')))))
         else:
-            list.setPixmap(QPixmap("./images/chess_black.png"))
+            list.setPixmap(QPixmap("./images/%s.png" % (str(self.settings.value('minus', 'chess_black')))))
         list.setProperty("coordx", x)
         list.setProperty("coordy", y)
         self.animation = QPropertyAnimation(list, b"geometry")
@@ -125,13 +167,13 @@ class InterFace(QMainWindow):
 
     # 线程处理时的动图播放函数
     def threadPlayMovie(self):
-        self.movie = QMovie("./images/balltosquare.gif")
+        self.movie = QMovie("./images/%s.gif" % (str(self.settings.value('ball', 'ball'))))
         self.ba.setMovie(self.movie)
         self.movie.start()
 
     # 设置图片，用于动画结束的槽函数
     def setPix(self):
-        self.ba.setPixmap(QPixmap("./images/ball.png"))
+        self.ba.setPixmap(QPixmap("./images/%s.png" % (str(self.settings.value('ball', 'ball')))))
 
     # 线程处理时发射障碍函数
     def threadShootArrow(self, lx, ly, x, y):
@@ -140,12 +182,15 @@ class InterFace(QMainWindow):
         self.ba = ba
         self.animation1 = QPropertyAnimation(ba, b"pixmap")
         self.animation1.setDuration(100)
+        self.animation1.setEndValue(QPixmap("./images/%s.png" % (str(self.settings.value('ball', 'ball')))))
         self.animation1.finished.connect(self.setPix)
         self.sequentAnimation.addAnimation(self.animation1)
+        ba.setVisible(True)
         ba.setScaledContents(True)
         ba.setGeometry(lx * offset + 2, (11 - ly) * offset + 2, offset - 2, offset - 2)
         ba.setProperty("coordx", x)
         ba.setProperty("coordy", y)
+        self.labelList_used.append(ba)
         self.animation = QPropertyAnimation(ba, b"geometry")
         self.animation.setDuration(500)
         self.animation.setEndValue(QRect(x * offset + 1.5, (11 - y) * offset + 1.5, offset - 2, offset - 2))
@@ -154,27 +199,253 @@ class InterFace(QMainWindow):
 
     # 电脑搜索走法函数
     def computeData(self):
-        strategy = Strategy(self.chessboard, self.status, self.chess_coord, self.blank)
-        result = []
-        for i in range(6):
-            result.append(strategy.result[i])
-        return result
-        # try:
-        #     status=False if self.status==3 else True
-        #     for i, j in zip([0] * 11, range(11)):
-        #         self.chessboard[(i, j)] = 1
-        #         self.chessboard[(11 - i, 11 - j)] = 1
-        #         self.chessboard[(j, 11)] = 1
-        #         self.chessboard[(11 - j, 0)] = 1
-        #     si=Simulator(self.chessboard,status,self.chess_coord,1)
-        #     si.chessMove(self.chessboard,status,self.chess_coord)
-        #     return si.result
-        # except Exception as e:
-        #     print(e)
+        try:
+            host = self.settings.value("communicate", "127.0.0.1")
+            port = int(self.settings.value("port", 12345))
+            mode = 0
+            ip_num = int(self.settings.value("computer_num", 1))
+            ip_pack = []
+            for i in range(ip_num):
+                ip_pack.append(str(self.settings.value("compute%d" % i, '127.0.0.1')))
+            # ip_pack = ['127.0.0.1']
+            local = socket(AF_INET, SOCK_DGRAM)
+            chessboard = []
+            for i in range(1, 11):
+                temp = []
+                for j in range(1, 11):
+                    temp.append(self.chessboard[(i, j)])
+                chessboard.append(temp)
+            status = False if self.status == 3 else True
+            chess_coord = deepcopy(self.chess_coord)
+            blank = self.blank
+            settings = []
+            settings.append(int(self.settings.value('child_num', 2300)))
+            settings.append(int(self.settings.value('node_num', 200000)))
+            settings.append(float(self.settings.value('UCB_COEF', 1.0)))
+            settings.append(int(self.settings.value('simulate', 1)))
+            settings.append(int(self.settings.value('min_visit_num', 30)))
+            settings.append(int(self.settings.value('max_visit_num', 1000000)))
+            settings.append(int(self.settings.value('process_num', 3)))
+            settings.append(float(self.settings.value('virtual', 2.0)))
+            pack = []
+            pack.append(chessboard)
+            pack.append(status)
+            pack.append(chess_coord)
+            pack.append(blank)
+            pack.append(mode)
+            pack.append(ip_pack)
+            pack.append(settings)
+            pack.append(port)
+            zip = dumps(pack)
+            local.sendto(zip.encode(encoding='utf-8'), (host, port))
+
+            counter = Count_time(self, local, (host, port))
+            counter.start()
+
+            data, address = local.recvfrom(2048)
+            if self.stop_flag == True:
+                self.stop_flag = False
+
+            local.close()
+            return list(loads(data.decode(encoding='utf-8')))
+            # try:
+            #     status=False if self.status==3 else True
+            #     for i, j in zip([0] * 11, range(11)):
+            #         self.chessboard[(i, j)] = 1
+            #         self.chessboard[(11 - i, 11 - j)] = 1
+            #         self.chessboard[(j, 11)] = 1
+            #         self.chessboard[(11 - j, 0)] = 1
+            #     si=Simulator(self.chessboard,status,self.chess_coord,1)
+            #     si.chessMove(self.chessboard,status,self.chess_coord)
+            #     return si.result
+            # except Exception as e:
+            #     print(e)
+        except Exception as e:
+            print(e)
 
     '''
     以下为主线程UI逻辑函数
     '''
+
+    def start_game(self):
+        if self.mode == 2 or self.mode == 3:
+            self.start_flag = True
+
+        if self.run_status == 1 or self.run_status == 0:
+            self.initBoard()
+            self.run_status = 0
+        self.antimouse = 0
+        self.start.setEnabled(False)
+        self.pause.setEnabled(True)
+        self.stop.setEnabled(True)
+
+    def pause_game(self):
+        if self.status == 3 or self.status == 4:
+            QMessageBox.warning(self, '提示', '当前为电脑落子，不允许暂停！', QMessageBox.Yes, QMessageBox.Yes)
+            return
+        self.antimouse = 1
+        self.run_status = 2
+        self.start.setEnabled(True)
+        self.pause.setEnabled(False)
+
+    def stop_game(self):
+        if self.status == 3 or self.status == 4:
+            QMessageBox.warning(self, '提示', '当前为电脑落子，不允许停止，请使用强制落子功能！', QMessageBox.Yes, QMessageBox.Yes)
+            return
+        self.run_status = 1
+        self.antimouse = 1
+        self.start_flag = False
+        self.stop.setEnabled(False)
+        self.pause.setEnabled(False)
+        self.start.setEnabled(True)
+
+    def return_begin(self):
+        moves = self.gamerecord.getLastAllStep()
+        for result in moves:
+            self.cancel_move(result[0], result[1], result[2], result[3], result[4], result[5])
+            self.change_status()
+        if self.blank == 92:
+            self.set_left_disable()
+        self.set_right_enable()
+        pass
+
+    def back_five(self):
+        moves = self.gamerecord.getLastFiveStep()
+        for result in moves:
+            self.cancel_move(result[0], result[1], result[2], result[3], result[4], result[5])
+            self.change_status()
+        if self.blank == 92:
+            self.set_left_disable()
+        self.set_right_enable()
+        pass
+
+    def back(self):
+        result = self.gamerecord.getLastStep()
+        self.cancel_move(result[0][0], result[0][1], result[0][2], result[0][3], result[0][4], result[0][5])
+        self.change_status()
+        if self.blank == 92:
+            self.set_left_disable()
+        self.set_right_enable()
+        pass
+
+    def forward(self):
+        result = self.gamerecord.getNextStep()
+        self.conduct_move(result[0][0], result[0][1], result[0][2], result[0][3], result[0][4], result[0][5])
+        self.change_status()
+        if len(self.gamerecord.gameBackwardStack) == 0:
+            self.set_right_disable()
+        self.set_left_enable()
+        pass
+
+    def forward_five(self):
+        moves = self.gamerecord.getNextFiveStep()
+        for result in moves:
+            self.conduct_move(result[0], result[1], result[2], result[3], result[4], result[5])
+            self.change_status()
+        if len(self.gamerecord.gameBackwardStack) == 0:
+            self.set_right_disable()
+        self.set_left_enable()
+        pass
+
+    def return_end(self):
+        moves = self.gamerecord.getNextAllStep()
+        for result in moves:
+            self.conduct_move(result[0], result[1], result[2], result[3], result[4], result[5])
+            self.change_status()
+        if len(self.gamerecord.gameBackwardStack) == 0:
+            self.set_right_disable()
+        self.set_left_enable()
+        pass
+
+    def cancel_move(self, last_x, last_y, x, y, arr_x, arr_y):
+        offset = self.chess.width() / 12
+        list = self.chess.childAt(QPoint(arr_x * offset + 2, (11 - arr_y) * offset + 2))
+        self.chessboard[(arr_x, arr_y)] = 0
+        list.setVisible(False)
+        self.labelList_used.remove(list)
+        self.labelList.append(list)
+        chess1 = self.chess.childAt(QPoint(x * offset + 2, (11 - y) * offset + 2))
+        flag = self.chessboard[(x, y)]
+        if flag == 2:
+            self.chess_coord[0].remove((x, y))
+            self.chess_coord[0].append((last_x, last_y))
+        else:
+            self.chess_coord[1].remove((x, y))
+            self.chess_coord[1].append((last_x, last_y))
+        chess1.setGeometry(last_x * offset + 2, (11 - last_y) * offset + 2, offset - 2, offset - 2)
+        chess1.setProperty("coordx", last_x)
+        chess1.setProperty("coordy", last_y)
+        self.chessboard[(last_x, last_y)] = flag
+        self.chessboard[(x, y)] = 0
+        self.blank += 1
+        self.clicktimes -= 3
+        pass
+
+    def conduct_move(self, last_x, last_y, x, y, arr_x, arr_y):
+        flag = self.chessboard[(x, y)] = self.chessboard[(last_x, last_y)]
+        self.chessboard[(last_x, last_y)] = 0
+        offset = self.chess.width() / 12
+        chess1 = self.chess.childAt(QPoint(last_x * offset + 2, (11 - last_y) * offset + 2))
+        if flag == 2:
+            self.chess_coord[0].remove((last_x, last_y))
+            self.chess_coord[0].append((x, y))
+        else:
+            self.chess_coord[1].remove((last_x, last_y))
+            self.chess_coord[1].append((x, y))
+        chess1.setGeometry(x * offset + 2, (11 - y) * offset + 2, offset - 2, offset - 2)
+        chess1.setProperty("coordx", x)
+        chess1.setProperty("coordy", y)
+
+        list = self.labelList.pop()
+        list.setVisible(True)
+        list.setPixmap(QPixmap('./images/obstacle.png'))
+        list.setGeometry(arr_x * offset + 2, (11 - arr_y) * offset + 2, offset - 2, offset - 2)
+        list.setProperty("coordx", arr_x)
+        list.setProperty("coordy", arr_y)
+        self.labelList_used.append(list)
+        self.chessboard[(arr_x, arr_y)] = 1
+
+        self.blank -= 1
+        self.clicktimes += 3
+        pass
+
+    def change_status(self):
+        self.antiThreadFlag = 1
+        if self.mode == 1:
+            self.status = 3 - self.status
+        elif self.mode == 2:
+            if self.status == 1 or self.status == 2:
+                self.status = 5 - self.status
+                self.antimouse = 1
+            elif self.status == 3 or self.status == 4:
+                self.status = 5 - self.status
+                self.antimouse = 0
+        elif self.mode == 3:
+            self.status = 7 - self.status
+            self.antimouse = 1
+
+    def set_left_enable(self):
+        self.Hide_left_left.setEnabled(True)
+        self.Hide_left.setEnabled(True)
+        self.left.setEnabled(True)
+
+    def set_right_enable(self):
+        self.right.setEnabled(True)
+        self.Hide_right.setEnabled(True)
+        self.Hide_right_right.setEnabled(True)
+
+    def set_left_disable(self):
+        self.Hide_left_left.setEnabled(False)
+        self.Hide_left.setEnabled(False)
+        self.left.setEnabled(False)
+
+    def set_right_disable(self):
+        self.right.setEnabled(False)
+        self.Hide_right.setEnabled(False)
+        self.Hide_right_right.setEnabled(False)
+
+    def release_thread(self):
+        self.antiThreadFlag = 0
 
     # 设置菜单栏
     def menuLayout(self):
@@ -230,26 +501,21 @@ class InterFace(QMainWindow):
         movecontrol.addAction(suggest)
         coordmove = QAction("坐标落子", self)
         movecontrol.addAction(coordmove)
-        switchside = QAction("转换角色", self)
-        movecontrol.addAction(switchside)
+
         # 设置的子菜单
         setting = self.bar.addMenu(" 设  置 ")
-        appearance = QAction("界面设置", self)
-        setting.addAction(appearance)
-        setting.addSeparator()
         gamemode = QAction("对战模式", self)
         setting.addAction(gamemode)
-        parallelmode = QAction("并行模式", self)
+        parallelmode = QAction("功能分配", self)
         setting.addAction(parallelmode)
         setting.addSeparator()
-        parameter = QAction("算法参数", self)
+        parameter = QAction("参数设置", self)
         parameter.setShortcut("Ctrl+H")
         setting.addAction(parameter)
         # 视图的子菜单
         view = self.bar.addMenu(" 视  图 ")
         self.toolcolumn = QAction("工具栏", self)
         self.toolcolumn.setShortcut("Ctrl+T")
-        # self.toolcolumn.setObjectName("toolcolumn")
         self.toolcolumn.setIcon(QIcon("./images/checked.png"))
         self.toolcolumn.triggered.connect(self.displayToolbar)
         view.addAction(self.toolcolumn)
@@ -269,39 +535,50 @@ class InterFace(QMainWindow):
     def toolLayout(self):
         self.tb = QToolBar()
         self.tb.setObjectName("tb")
-        start = QAction(QIcon("./images/Start.png"), "开始&继续", self)
-        self.tb.addAction(start)
-        pause = QAction(QIcon("./images/Pause.png"), "暂停", self)
-        self.tb.addAction(pause)
-        stop = QAction(QIcon("./images/Stop_red.png"), "停止", self)
-        self.tb.addAction(stop)
+        self.start = QAction(QIcon("./images/Start.png"), "开始&继续", self)
+        self.start.triggered.connect(self.start_game)
+        self.tb.addAction(self.start)
+        self.pause = QAction(QIcon("./images/Pause.png"), "暂停", self)
+        self.pause.triggered.connect(self.pause_game)
+        self.pause.setEnabled(False)
+        self.tb.addAction(self.pause)
+        self.stop = QAction(QIcon("./images/Stop_red.png"), "停止", self)
+        self.stop.triggered.connect(self.stop_game)
+        self.stop.setEnabled(False)
+        self.tb.addAction(self.stop)
         self.tb.addSeparator()
         open = QAction(QIcon("./images/open_file.png"), "打开", self)
         self.tb.addAction(open)
         save = QAction(QIcon("./images/Save.png"), "保存", self)
         self.tb.addAction(save)
         self.tb.addSeparator()
-        Hide_left_left = QAction(QIcon("./images/Hide_left_left.png"), "回到开局", self)
-        self.tb.addAction(Hide_left_left)
-        Hide_left = QAction(QIcon("./images/Hide_left.png"), "后退五步", self)
-        self.tb.addAction(Hide_left)
-        left = QAction(QIcon("./images/left.png"), "后退一步", self)
-        self.tb.addAction(left)
-        right = QAction(QIcon("./images/right.png"), "前进一步", self)
-        self.tb.addAction(right)
-        Hide_right = QAction(QIcon("./images/Hide_right.png"), "前进五步", self)
-        self.tb.addAction(Hide_right)
-        Hide_right_right = QAction(QIcon("./images/Hide_right_right.png"), "直达终局", self)
-        self.tb.addAction(Hide_right_right)
+        self.Hide_left_left = QAction(QIcon("./images/Hide_left_left.png"), "回到开局", self)
+        self.Hide_left_left.triggered.connect(self.return_begin)
+        self.tb.addAction(self.Hide_left_left)
+        self.Hide_left = QAction(QIcon("./images/Hide_left.png"), "后退五步", self)
+        self.Hide_left.triggered.connect(self.back_five)
+        self.tb.addAction(self.Hide_left)
+        self.left = QAction(QIcon("./images/left.png"), "后退一步", self)
+        self.left.triggered.connect(self.back)
+        self.tb.addAction(self.left)
+        self.right = QAction(QIcon("./images/right.png"), "前进一步", self)
+        self.right.triggered.connect(self.forward)
+        self.tb.addAction(self.right)
+        self.Hide_right = QAction(QIcon("./images/Hide_right.png"), "前进五步", self)
+        self.Hide_right.triggered.connect(self.forward_five)
+        self.tb.addAction(self.Hide_right)
+        self.Hide_right_right = QAction(QIcon("./images/Hide_right_right.png"), "直达终局", self)
+        self.Hide_right_right.triggered.connect(self.return_end)
+        self.tb.addAction(self.Hide_right_right)
         self.tb.addSeparator()
-        Prohibit = QAction(QIcon("./images/Prohibit.png"), "强制落子", self)
-        self.tb.addAction(Prohibit)
-        Refresh = QAction(QIcon("./images/refresh.png"), "刷新棋盘", self)
+        self.Prohibit = QAction(QIcon("./images/Prohibit.png"), "强制落子", self)
+        self.Prohibit.triggered.connect(self.moveInforce)
+        self.Prohibit.setEnabled(False)
+        self.tb.addAction(self.Prohibit)
+        Refresh = QAction(QIcon("./images/Refresh.png"), "刷新棋盘", self)
         self.tb.addAction(Refresh)
         Analyze = QAction(QIcon("./images/Analyze.png"), "分析", self)
         self.tb.addAction(Analyze)
-        Suggest = QAction(QIcon("./images/Suggest.png"), "建议", self)
-        self.tb.addAction(Suggest)
         self.tb.addSeparator()
         Situation = QAction(QIcon("./images/Situation.png"), "博弈实况", self)
         self.tb.addAction(Situation)
@@ -309,9 +586,9 @@ class InterFace(QMainWindow):
         self.tb.addAction(Info)
         Setting = QAction(QIcon("./images/Setting.png"), "设置", self)
         self.tb.addAction(Setting)
-        self.tb.addSeparator()
-        Sound = QAction(QIcon("./images/Sound.png"), "声音", self)
-        self.tb.addAction(Sound)
+        # self.tb.addSeparator()
+        # Sound = QAction(QIcon("./images/Sound.png"), "声音", self)
+        # self.tb.addAction(Sound)
         self.addToolBar(self.tb)
 
     # 将窗口移至屏幕中心
@@ -342,7 +619,15 @@ class InterFace(QMainWindow):
         self.lastx = -1
         self.lasty = -1
         self.blank = 92
-        self.labelList = []
+
+        self.status = int(self.settings.value("status", 1))
+        self.mode = int(self.settings.value("mode", 1))
+
+        while len(self.labelList_used) != 0:
+            element = self.labelList_used.pop()
+            element.setVisible(False)
+            self.labelList.append(element)
+
         self.chess_coord = []
         self.chess_coord.append([])
         self.chess_coord.append([])
@@ -362,14 +647,9 @@ class InterFace(QMainWindow):
         self.gamerecord.currentChessBroad = deepcopy(self.chessboard)
         self.gamerecord.storeChessBoard()
 
-    # 显示棋盘
-    def displayBoard(self):
-        self.centralwidget = QWidget(self)
-        self.setCentralWidget(self.centralwidget)
-        self.chess = QLabel(self.centralwidget)
         minsize = min(self.centralwidget.width() / 3 * 2 - 40, self.centralwidget.height() - 20)
         self.chess.setGeometry(20, 20, minsize, minsize)
-        self.chess.setPixmap(QPixmap("./images/chessboard.png"))
+        self.chess.setPixmap(QPixmap("./images/%s" % (str(self.settings.value('chessboard', 'chessboard.png')))))
         self.chess.setScaledContents(True)
         self.display = QLabel(self.centralwidget)
         self.display.setFont(QFont("微软雅黑", 12))
@@ -382,35 +662,39 @@ class InterFace(QMainWindow):
         self.display.setText(self.text)
         self.display.setGeometry(self.centralwidget.width() / 3 * 2, 20, self.centralwidget.width() / 3 - 40,
                                  self.centralwidget.height() - 40)
-        # 生成92个待用QLabel作为障碍备用
-        for i in range(92):
-            self.labelList.append(QLabel(self.chess))
 
         # 布置棋盘
         offset = self.chess.width() / 12
         for x in range(1, 11):
             for y in range(1, 11):
-                if (self.chessboard[(x, y)] == 1):
-                    la = QLabel(self.chess)
-                    la.setPixmap(QPixmap("./images/obstacle.png"))
-                    la.setScaledContents(True)
-                    la.setGeometry(x * offset + 2, (11 - y) * offset + 2, offset - 2, offset - 2)
-                    la.setProperty("coordx", x)
-                    la.setProperty("coordy", y)
-                elif (self.chessboard[(x, y)] == 2):
-                    la = QLabel(self.chess)
+                if (self.chessboard[(x, y)] == 2):
+                    la = self.labelList.pop()
+                    la.setVisible(True)
                     la.setPixmap(QPixmap("./images/chess_white.png"))
                     la.setScaledContents(True)
                     la.setGeometry(x * offset + 2, (11 - y) * offset + 2, offset - 2, offset - 2)
                     la.setProperty("coordx", x)
                     la.setProperty("coordy", y)
+                    self.labelList_used.append(la)
                 elif (self.chessboard[(x, y)] == 3):
-                    la = QLabel(self.chess)
+                    la = self.labelList.pop()
+                    la.setVisible(True)
                     la.setPixmap(QPixmap("./images/chess_black.png"))
                     la.setScaledContents(True)
                     la.setGeometry(x * offset + 2, (11 - y) * offset + 2, offset - 2, offset - 2)
                     la.setProperty("coordx", x)
                     la.setProperty("coordy", y)
+                    self.labelList_used.append(la)
+
+        self.set_left_disable()
+        self.set_right_disable()
+
+        self.start_flag = True
+        if self.mode == 2 or self.mode == 3:
+            self.workthread = WorkThread(self)
+            self.workthread.returnResult.connect(self.threadConduct)
+            self.antiThreadFlag = 0  # 开启子线程响应
+            self.workthread.start()
 
     # 重载窗口大小改变事件
     def resizeEvent(self, event):
@@ -446,20 +730,25 @@ class InterFace(QMainWindow):
                         list = self.chess.childAt(QPoint(x * offset + 2, (11 - y) * offset + 2))
                         if list.movie() is not None:
                             if self.chessboard[(x, y)] == 2:
-                                list.setPixmap(QPixmap("./images/chess_white.png"))
+                                list.setPixmap(
+                                    QPixmap("./images/%s.png" % (str(self.settings.value('plus', 'chess_white')))))
                             else:
-                                list.setPixmap(QPixmap("./images/chess_black.png"))
+                                list.setPixmap(
+                                    QPixmap("./images/%s.png" % (str(self.settings.value('minus', 'chess_black')))))
                             self.clicktimes -= 1
 
     # 发射障碍动画
     def shootArrow(self, lx, ly, x, y):
         offset = self.chess.width() / 12
         ba = self.labelList.pop()
-        ba.setPixmap(QPixmap("./images/ball.png"))
+
+        ba.setPixmap(QPixmap("./images/%s.png" % (str(self.settings.value('ball', 'ball')))))
         ba.setScaledContents(True)
         ba.setGeometry(lx * offset + 2, (11 - ly) * offset + 2, offset - 2, offset - 2)
         ba.setProperty("coordx", x)
         ba.setProperty("coordy", y)
+        ba.setVisible(True)
+        self.labelList_used.append(ba)
         self.animation = QPropertyAnimation(ba, b"geometry")
         self.animation.setDuration(500)
         self.animation.setEndValue(QRect(x * offset + 1.5, (11 - y) * offset + 1.5, offset - 2, offset - 2))
@@ -470,7 +759,7 @@ class InterFace(QMainWindow):
 
     # 属性动画结束后播放movie
     def playMovie(self):
-        self.movie = QMovie("./images/balltosquare.gif")
+        self.movie = QMovie("./images/%s.gif" % (str(self.settings.value('ball', 'ball'))))
         self.ba.setMovie(self.movie)
         self.movie.start()
         self.movie.finished.connect(self.judgeIsover)
@@ -511,9 +800,9 @@ class InterFace(QMainWindow):
         offset = self.chess.width() / 12
         list = self.chess.childAt(QPoint(lx * offset + 2, (11 - ly) * offset + 2))
         if self.currentChess == 2:
-            list.setPixmap(QPixmap("./images/chess_white.png"))
+            list.setPixmap(QPixmap("./images/%s.png" % (str(self.settings.value('plus', 'chess_white')))))
         else:
-            list.setPixmap(QPixmap("./images/chess_black.png"))
+            list.setPixmap(QPixmap("./images/%s.png" % (str(self.settings.value('minus', 'chess_black')))))
         list.setProperty("coordx", x)
         list.setProperty("coordy", y)
         self.animation = QPropertyAnimation(list, b"geometry")
@@ -527,9 +816,9 @@ class InterFace(QMainWindow):
         offset = self.chess.width() / 12
         list = self.chess.childAt(QPoint(x * offset + 5, (11 - y) * offset + 5))
         if self.currentChess == 2:
-            movie = QMovie("./images/plus.gif")
+            movie = QMovie("./images/%s.gif" % (str(self.settings.value('plus', 'chess_white'))))
         else:
-            movie = QMovie("./images/minus.gif")
+            movie = QMovie("./images/%s.gif" % (str(self.settings.value('minus', 'chess_black'))))
         list.setMovie(movie)
         movie.start()
 
@@ -548,6 +837,9 @@ class InterFace(QMainWindow):
                     self.gamerecord.currentChessBroad = deepcopy(self.chessboard)
                     self.gamerecord.storeMove()
                     self.gamerecord.storeChessBoard()
+                    self.set_left_enable()
+                    self.set_right_disable()
+                    self.gamerecord.clear_history()
                     self.antimouse = 1  # 关闭鼠标响应
                     self.shootArrow(lx, ly, x, y)
                 else:
@@ -608,6 +900,10 @@ class InterFace(QMainWindow):
         self.lastx = x
         self.lasty = y
         return 0
+
+    # 强制落子
+    def moveInforce(self):
+        self.stop_flag = True
 
 
 if __name__ == "__main__":

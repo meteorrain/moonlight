@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 # @time： 2018/3/7
 # @author: RuiQing Chen
-# @definition:gameForwardStack:
-#             gameBackwardStack:
-#             currentMove:
-#             chessBoardRecord:
-#             currentChessBoardFlag:
-#             currentChessBoard:
+# @definition:
+#
+#
+
 
 from copy import deepcopy
 
@@ -30,7 +28,7 @@ class GameRecorder:
         lastStep = []
         if len(self.gameForwardStack):
             lastStep.append(self.gameForwardStack.pop())
-            self.gameBackwardStack.append(lastStep)
+            self.gameBackwardStack.append(lastStep[0])
         return lastStep
 
     # 获得下一步走法
@@ -38,7 +36,7 @@ class GameRecorder:
         nextStep = []
         if len(self.gameBackwardStack):
             nextStep.append(self.gameBackwardStack.pop())
-            self.gameForwardStack.append(nextStep)
+            self.gameForwardStack.append(nextStep[0])
         return nextStep
 
     # 获得上五步走法
@@ -49,6 +47,8 @@ class GameRecorder:
                 lastFiveStep.append(self.gameForwardStack.pop())
             else:
                 break
+        for step in lastFiveStep:
+            self.gameBackwardStack.append(step)
         return lastFiveStep
 
     # 获得下五步走法
@@ -59,6 +59,9 @@ class GameRecorder:
                 nextFiveStep.append(self.gameBackwardStack.pop())
             else:
                 break
+        for step in nextFiveStep:
+            self.gameForwardStack.append(step)
+            pass
         return nextFiveStep
 
     # 获得从现局到开局的所有走法
@@ -66,6 +69,8 @@ class GameRecorder:
         lastAllStep = []
         while len(self.gameForwardStack):
             lastAllStep.append(self.gameForwardStack.pop())
+        for step in lastAllStep:
+            self.gameBackwardStack.append(step)
         return lastAllStep
 
     # 获得从现局到终局的所有走法
@@ -73,6 +78,8 @@ class GameRecorder:
         nextAllStep = []
         while len(self.gameBackwardStack):
             nextAllStep.append(self.gameBackwardStack.pop())
+        for step in nextAllStep:
+            self.gameForwardStack.append(step)
         return nextAllStep
 
     # 存储棋局
@@ -142,3 +149,9 @@ class GameRecorder:
         self.currentMove.clear()
         self.currentChessBoard.clear()
         self.currentChessBoardFlag = -1
+
+    # 清除当前棋局和走法之后的所有记录
+    def clear_history(self):
+        self.gameBackwardStack.clear()
+        # for i in range(self.currentChessBoardFlag,len(self.chessBoardRecord)):
+        #     self.chessBoardRecord.remove(self.chessBoardRecord[i])

@@ -132,7 +132,7 @@ class MoveGenerator:
             a = randrange(1, 3)
             if a != 1:
                 return
-        print(self.curr_num.value)
+        # print(self.curr_num.value)
         node.children[node.children_num] = self.curr_num
         self.state_space[self.curr_num.value] = Node(self.curr_num, 1 - node.status, 0, 0, 0.0, node.blank - 1,
                                                      False,

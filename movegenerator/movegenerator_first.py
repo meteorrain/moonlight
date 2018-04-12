@@ -103,7 +103,7 @@ class MoveGenerator_first:
 
     def expand(self, last_x, last_y, x, y, arr_x, arr_y):
         node = self.state_space[self.location]
-        print(self.curr_num.value)
+        # print(self.curr_num.value)
         node.children[node.children_num] = self.curr_num
         self.state_space[self.curr_num.value] = Node(self.curr_num, 1 - node.status, 0, 0, 0.0, node.blank - 1,
                                                      False,
