@@ -7,14 +7,14 @@ from math import *
 
 class Evaluator:
     def __init__(self, chessboard, status, chess_coord):
-        self.status = status
+        self.status = 0 if status==1 or status==2 else 1
         self.chessboard = chessboard
         self.chess_coord = chess_coord
         self.kingMovePositive = {}
         self.kingMoveNegative = {}
         self.queenMovePositive = {}
         self.queenMoveNegative = {}
-        self.convert(chessboard, chess_coord)
+        self.broadChange()
         self.kingTraverse()
         self.queenTraverse()
         self.computeValue()
@@ -31,6 +31,12 @@ class Evaluator:
                 temp.append(tuple([chess_coord[i][j], chess_coord[i][j + 1]]))
             self.chess_coord.append(temp)
 
+    def broadChange(self):
+        for i, j in zip([0] * 11, range(11)):
+            self.chessboard[(i, j)] = 1
+            self.chessboard[(11 - i, 11 - j)] = 1
+            self.chessboard[(j, 11)] = 1
+            self.chessboard[(11 - j, 0)] = 1
     # 国王移动法棋盘估值
     def kingTraverse(self):
         for x in range(1, 11):

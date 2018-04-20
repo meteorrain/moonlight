@@ -4,11 +4,14 @@
 # @definition:winner: 0——正方胜  1——反方胜  -1——胜负未知
 #             over: true——游戏结束  false——游戏未结束
 
+from copy import deepcopy
+
 
 class GameRule:
     def __init__(self):
         self.winner = -1
         self.over = False
+        self.blank = 0
 
     # 判断走法是否合理
     def moveRule(self, coord, last_x, last_y, curr_x, curr_y):
@@ -41,37 +44,95 @@ class GameRule:
     # 判断棋局是否结束
     def isOver(self, coord, turn, chess_coord):
         count = 0
-        if turn == 1 or turn == 3:
-            for value in chess_coord[0]:
-                x = value[0]
-                y = value[1]
-                if coord[(x, y)] == 2:
-                    if (x - 1 == 0 or y - 1 == 0 or coord[(x - 1, y - 1)] != 0) and (
-                            x - 1 == 0 or coord[(x - 1, y)] != 0) and \
-                            (y - 1 == 0 or coord[(x, y - 1)] != 0) and (
-                            x - 1 == 0 or y + 1 == 11 or coord[(x - 1, y + 1)] != 0) and \
-                            (x + 1 == 11 or y - 1 == 0 or coord[(x + 1, y - 1)] != 0) and (
-                            x + 1 == 11 or coord[(x + 1, y)] != 0) and \
-                            (y + 1 == 11 or coord[(x, y + 1)] != 0) and (
-                            x + 1 == 11 or y + 1 == 11 or coord[(x + 1, y + 1)] != 0):
-                        count += 1
-            if count == 4:
+        count1 = 0
+        for value in chess_coord[0]:
+            x = value[0]
+            y = value[1]
+            if (x - 1 == 0 or y - 1 == 0 or coord[(x - 1, y - 1)] != 0) and (
+                    x - 1 == 0 or coord[(x - 1, y)] != 0) and \
+                    (y - 1 == 0 or coord[(x, y - 1)] != 0) and (
+                    x - 1 == 0 or y + 1 == 11 or coord[(x - 1, y + 1)] != 0) and \
+                    (x + 1 == 11 or y - 1 == 0 or coord[(x + 1, y - 1)] != 0) and (
+                    x + 1 == 11 or coord[(x + 1, y)] != 0) and \
+                    (y + 1 == 11 or coord[(x, y + 1)] != 0) and (
+                    x + 1 == 11 or y + 1 == 11 or coord[(x + 1, y + 1)] != 0):
+                count += 1
+        for value in chess_coord[1]:
+            x = value[0]
+            y = value[1]
+            if (x - 1 == 0 or y - 1 == 0 or coord[(x - 1, y - 1)] != 0) and (
+                    x - 1 == 0 or coord[(x - 1, y)] != 0) and \
+                    (y - 1 == 0 or coord[(x, y - 1)] != 0) and (
+                    x - 1 == 0 or y + 1 == 11 or coord[(x - 1, y + 1)] != 0) and \
+                    (x + 1 == 11 or y - 1 == 0 or coord[(x + 1, y - 1)] != 0) and (
+                    x + 1 == 11 or coord[(x + 1, y)] != 0) and \
+                    (y + 1 == 11 or coord[(x, y + 1)] != 0) and (
+                    x + 1 == 11 or y + 1 == 11 or coord[(x + 1, y + 1)] != 0):
+                count1 += 1
+        if count == 4:
+            if count1 == 4:
+                if turn == 3 or turn == 1:
+                    self.winner = 0
+                else:
+                    self.winner = 1
+            else:
                 self.winner = 1
-                self.over = True
+            self.over = True
         else:
-            for value in chess_coord[1]:
-                x = value[0]
-                y = value[1]
-                if coord[(x, y)] == 3:
-                    if (x - 1 == 0 or y - 1 == 0 or coord[(x - 1, y - 1)] != 0) and (
-                            x - 1 == 0 or coord[(x - 1, y)] != 0) and \
-                            (y - 1 == 0 or coord[(x, y - 1)] != 0) and (
-                            x - 1 == 0 or y + 1 == 11 or coord[(x - 1, y + 1)] != 0) and \
-                            (x + 1 == 11 or y - 1 == 0 or coord[(x + 1, y - 1)] != 0) and (
-                            x + 1 == 11 or coord[(x + 1, y)] != 0) and \
-                            (y + 1 == 11 or coord[(x, y + 1)] != 0) and (
-                            x + 1 == 11 or y + 1 == 11 or coord[(x + 1, y + 1)] != 0):
-                        count += 1
-            if count == 4:
+            if count1 == 4:
                 self.winner = 0
                 self.over = True
+            else:
+                self.over = False
+        if self.over==True:
+            self.checkBlank(coord, turn, chess_coord)
+
+    def checkBlank(self, coord, turn, chess_coord):
+        chessboard = deepcopy(coord)
+        for i, j in zip([0] * 11, range(11)):
+            chessboard[(i, j)] = 1
+            chessboard[(11 - i, 11 - j)] = 1
+            chessboard[(j, 11)] = 1
+            chessboard[(11 - j, 0)] = 1
+        self.blank = 0
+        if turn == 3 or turn == 1:
+            flag = 0
+        else:
+            flag = 1
+        for value in chess_coord[flag]:
+            x = value[0]
+            y = value[1]
+            step = 1
+            while coord[(x - step, y - step)] == 0:
+                self.blank += 1
+                step += 1
+            step = 1
+            while coord[(x - step, y )] == 0:
+                self.blank += 1
+                step += 1
+            step = 1
+            while coord[(x - step, y + step)] == 0:
+                self.blank += 1
+                step += 1
+
+            step = 1
+            while coord[(x , y - step)] == 0:
+                self.blank += 1
+                step += 1
+            step = 1
+            while coord[(x , y + step)] == 0:
+                self.blank += 1
+                step += 1
+
+            step = 1
+            while coord[(x + step, y - step)] == 0:
+                self.blank += 1
+                step += 1
+            step = 1
+            while coord[(x + step, y )] == 0:
+                self.blank += 1
+                step += 1
+            step = 1
+            while coord[(x + step, y + step)] == 0:
+                self.blank += 1
+                step += 1

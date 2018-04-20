@@ -25,62 +25,80 @@ class GameRecorder:
 
     # 获得上一步走法
     def getLastStep(self):
-        lastStep = []
-        if len(self.gameForwardStack):
-            lastStep.append(self.gameForwardStack.pop())
-            self.gameBackwardStack.append(lastStep[0])
-        return lastStep
+        try:
+            lastStep = []
+            if len(self.gameForwardStack):
+                lastStep.append(self.gameForwardStack.pop())
+                self.gameBackwardStack.append(lastStep[0])
+            return lastStep
+        except Exception as e:
+            print(e)
 
     # 获得下一步走法
     def getNextStep(self):
-        nextStep = []
-        if len(self.gameBackwardStack):
-            nextStep.append(self.gameBackwardStack.pop())
-            self.gameForwardStack.append(nextStep[0])
-        return nextStep
+        try:
+            nextStep = []
+            if len(self.gameBackwardStack):
+                nextStep.append(self.gameBackwardStack.pop())
+                self.gameForwardStack.append(nextStep[0])
+            return nextStep
+        except Exception as e:
+            print(e)
 
     # 获得上五步走法
     def getLastFiveStep(self):
-        lastFiveStep = []
-        for i in range(5):
-            if len(self.gameForwardStack) > 0:
-                lastFiveStep.append(self.gameForwardStack.pop())
-            else:
-                break
-        for step in lastFiveStep:
-            self.gameBackwardStack.append(step)
-        return lastFiveStep
+        try:
+            lastFiveStep = []
+            for i in range(5):
+                if len(self.gameForwardStack) > 0:
+                    lastFiveStep.append(self.gameForwardStack.pop())
+                else:
+                    break
+            for step in lastFiveStep:
+                self.gameBackwardStack.append(step)
+            return lastFiveStep
+        except Exception as e:
+            print(e)
 
     # 获得下五步走法
     def getNextFiveStep(self):
-        nextFiveStep = []
-        for i in range(5):
-            if len(self.gameBackwardStack) > 0:
-                nextFiveStep.append(self.gameBackwardStack.pop())
-            else:
-                break
-        for step in nextFiveStep:
-            self.gameForwardStack.append(step)
-            pass
-        return nextFiveStep
+        try:
+            nextFiveStep = []
+            for i in range(5):
+                if len(self.gameBackwardStack) > 0:
+                    nextFiveStep.append(self.gameBackwardStack.pop())
+                else:
+                    break
+            for step in nextFiveStep:
+                self.gameForwardStack.append(step)
+                pass
+            return nextFiveStep
+        except Exception as e:
+            print(e)
 
     # 获得从现局到开局的所有走法
     def getLastAllStep(self):
-        lastAllStep = []
-        while len(self.gameForwardStack):
-            lastAllStep.append(self.gameForwardStack.pop())
-        for step in lastAllStep:
-            self.gameBackwardStack.append(step)
-        return lastAllStep
+        try:
+            lastAllStep = []
+            while len(self.gameForwardStack):
+                lastAllStep.append(self.gameForwardStack.pop())
+            for step in lastAllStep:
+                self.gameBackwardStack.append(step)
+            return lastAllStep
+        except Exception as e:
+            print(e)
 
     # 获得从现局到终局的所有走法
     def getNextAllStep(self):
-        nextAllStep = []
-        while len(self.gameBackwardStack):
-            nextAllStep.append(self.gameBackwardStack.pop())
-        for step in nextAllStep:
-            self.gameForwardStack.append(step)
-        return nextAllStep
+        try:
+            nextAllStep = []
+            while len(self.gameBackwardStack):
+                nextAllStep.append(self.gameBackwardStack.pop())
+            for step in nextAllStep:
+                self.gameForwardStack.append(step)
+            return nextAllStep
+        except Exception as e:
+            print(e)
 
     # 存储棋局
     def storeChessBoard(self):

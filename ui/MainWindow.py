@@ -16,6 +16,7 @@ from gamerecorder import GameRecorder
 from strategy import Strategy
 from threading import Thread
 from simulator import Simulator
+from evaluator import Evaluator
 from copy import deepcopy
 from time import time, sleep
 from socket import socket, AF_INET, SOCK_DGRAM
@@ -55,6 +56,7 @@ class WorkThread(QThread):
     def run(self):
         while True:
             self.sleep(0.5)  # 子线程每隔0.5秒查询一次
+
             if self.interFace.start_flag == True:
                 if (self.interFace.mode == 2 or self.interFace.mode == 3) \
                         and (
@@ -68,6 +70,7 @@ class WorkThread(QThread):
                     else:
                         self.interFace.currentChess = 3
                     self.interFace.antiThreadFlag = 1
+                    self.interFace.action.setText("  电脑行棋  ")
                     self.result = self.interFace.computeData()
                     self.sleep(2)
                     self.returnResult.emit(self.result)
@@ -76,6 +79,16 @@ class WorkThread(QThread):
                     self.interFace.set_right_disable()
                     self.interFace.gamerecord.clear_history()
                     self.interFace.Prohibit.setEnabled(False)
+
+
+class StatusThread(Thread):
+    def __init__(self, interFace):
+        super(StatusThread, self).__init__()
+        self.interFace = interFace
+
+    def run(self):
+        while True:
+            sleep(0.5)
 
 
 # 主窗口
@@ -105,10 +118,23 @@ class InterFace(QMainWindow):
         self.chess = QLabel(self.centralwidget)
         for i in range(100):
             self.labelList.append(QLabel(self.chess))
+
         self.initBoard()
+        self.showLabel()
         self.center()
+
         self.start_flag = False
         self.stop_flag = False
+        self.time_counter = []
+        for i in range(2):
+            self.time_counter.append(QTime(0, 0, 0, 0))
+        self.time_recorder = []
+        x1 = QTimer()
+        x1.timeout.connect(self.update_time1)
+        self.time_recorder.append(x1)
+        x2 = QTimer()
+        x2.timeout.connect(self.update_time2)
+        self.time_recorder.append(x2)
         self.antimouse = 1
         self.run_status = 0
 
@@ -140,15 +166,6 @@ class InterFace(QMainWindow):
         self.sequentAnimation.start()
         self.clicktimes += 3
         self.judgeIsover()
-
-    # 界面上显示电脑实时搜索情况
-    def realTimeDataConduct(self, estimation, sum):
-        while True:
-            time.sleep(1)
-            if self.status == 3 or self.status == 4:
-                self.display.setText(self.text)
-            else:
-                break
 
     # 线程处理时的棋子移动函数
     def threadChessMove(self, lx, ly, x, y):
@@ -268,16 +285,27 @@ class InterFace(QMainWindow):
     '''
 
     def start_game(self):
-        if self.mode == 2 or self.mode == 3:
-            self.start_flag = True
-
-        if self.run_status == 1 or self.run_status == 0:
-            self.initBoard()
-            self.run_status = 0
-        self.antimouse = 0
-        self.start.setEnabled(False)
-        self.pause.setEnabled(True)
-        self.stop.setEnabled(True)
+        try:
+            if self.mode == 2 or self.mode == 3:
+                self.start_flag = True
+            if self.run_status == 1 or self.run_status == 0:
+                self.initBoard()
+                self.white_time.setText("正方：  00:00  ")
+                self.black_time.setText("反方：  00:00  ")
+                for i in range(2):
+                    self.time_counter[i].setHMS(0, 0, 0)
+                self.run_status = 0
+            self.antimouse = 0
+            self.start.setEnabled(False)
+            self.pause.setEnabled(True)
+            self.stop.setEnabled(True)
+            self.game_status.setText("游戏状态：  运行中  ")
+            if self.status == 1 or self.status == 3:
+                self.time_recorder[0].start(1000)
+            else:
+                self.time_recorder[1].start(1000)
+        except Exception as e:
+            print(e)
 
     def pause_game(self):
         if self.status == 3 or self.status == 4:
@@ -287,6 +315,10 @@ class InterFace(QMainWindow):
         self.run_status = 2
         self.start.setEnabled(True)
         self.pause.setEnabled(False)
+        for i in range(2):
+            if self.time_recorder[i].isActive() == True:
+                self.time_recorder[i].stop()
+        self.game_status.setText("游戏状态：  已暂停  ")
 
     def stop_game(self):
         if self.status == 3 or self.status == 4:
@@ -298,64 +330,121 @@ class InterFace(QMainWindow):
         self.stop.setEnabled(False)
         self.pause.setEnabled(False)
         self.start.setEnabled(True)
+        for i in range(2):
+            if self.time_recorder[i].isActive() == True:
+                self.time_recorder[i].stop()
+        self.game_status.setText("游戏状态：  已停止  ")
+
+    def update_time1(self):
+        self.time_counter[0] = self.time_counter[0].addSecs(1)
+        temp = self.time_counter[0].toString('mm:ss')
+        self.white_time.setText("正方：  %s  " % temp)
+
+    def update_time2(self):
+        self.time_counter[1] = self.time_counter[1].addSecs(1)
+        temp = self.time_counter[1].toString('mm:ss')
+        self.black_time.setText("反方：  %s  " % temp)
 
     def return_begin(self):
-        moves = self.gamerecord.getLastAllStep()
-        for result in moves:
-            self.cancel_move(result[0], result[1], result[2], result[3], result[4], result[5])
-            self.change_status()
-        if self.blank == 92:
-            self.set_left_disable()
-        self.set_right_enable()
-        pass
+        try:
+            if self.status == 3 or self.status == 4:
+                QMessageBox.Warning(self, "提示", "当前为电脑方下棋，不允许控制棋谱！")
+                return
+            moves = self.gamerecord.getLastAllStep()
+            for result in moves:
+                # print(result)
+                self.change_status()
+                self.cancel_move(result[0], result[1], result[2], result[3], result[4], result[5])
+
+            if self.blank == 92:
+                self.set_left_disable()
+            self.set_right_enable()
+            pass
+        except Exception as e:
+            print(e)
 
     def back_five(self):
-        moves = self.gamerecord.getLastFiveStep()
-        for result in moves:
-            self.cancel_move(result[0], result[1], result[2], result[3], result[4], result[5])
-            self.change_status()
-        if self.blank == 92:
-            self.set_left_disable()
-        self.set_right_enable()
-        pass
+        try:
+            if self.status == 3 or self.status == 4:
+                QMessageBox.Warning(self, "提示", "当前为电脑方下棋，不允许控制棋谱！")
+                return
+            moves = self.gamerecord.getLastFiveStep()
+            for result in moves:
+                self.change_status()
+                self.cancel_move(result[0], result[1], result[2], result[3], result[4], result[5])
+
+            if self.blank == 92:
+                self.set_left_disable()
+            self.set_right_enable()
+            pass
+        except Exception as e:
+            print(e)
 
     def back(self):
-        result = self.gamerecord.getLastStep()
-        self.cancel_move(result[0][0], result[0][1], result[0][2], result[0][3], result[0][4], result[0][5])
-        self.change_status()
-        if self.blank == 92:
-            self.set_left_disable()
-        self.set_right_enable()
-        pass
+        try:
+            if self.status == 3 or self.status == 4:
+                QMessageBox.Warning(self, "提示", "当前为电脑方下棋，不允许控制棋谱！")
+                return
+            result = self.gamerecord.getLastStep()
+            self.change_status()
+            self.cancel_move(result[0][0], result[0][1], result[0][2], result[0][3], result[0][4], result[0][5])
+
+            if self.blank == 92:
+                self.set_left_disable()
+            self.set_right_enable()
+            pass
+        except Exception as e:
+            print(e)
 
     def forward(self):
-        result = self.gamerecord.getNextStep()
-        self.conduct_move(result[0][0], result[0][1], result[0][2], result[0][3], result[0][4], result[0][5])
-        self.change_status()
-        if len(self.gamerecord.gameBackwardStack) == 0:
-            self.set_right_disable()
-        self.set_left_enable()
-        pass
+        try:
+            if self.status == 3 or self.status == 4:
+                QMessageBox.Warning(self, "提示", "当前为电脑方下棋，不允许控制棋谱！")
+                return
+            result = self.gamerecord.getNextStep()
+            self.change_status()
+            self.conduct_move(result[0][0], result[0][1], result[0][2], result[0][3], result[0][4], result[0][5])
+
+            if len(self.gamerecord.gameBackwardStack) == 0:
+                self.set_right_disable()
+            self.set_left_enable()
+            pass
+        except Exception as e:
+            print(e)
 
     def forward_five(self):
-        moves = self.gamerecord.getNextFiveStep()
-        for result in moves:
-            self.conduct_move(result[0], result[1], result[2], result[3], result[4], result[5])
-            self.change_status()
-        if len(self.gamerecord.gameBackwardStack) == 0:
-            self.set_right_disable()
-        self.set_left_enable()
-        pass
+        try:
+            if self.status == 3 or self.status == 4:
+                QMessageBox.Warning(self, "提示", "当前为电脑方下棋，不允许控制棋谱！")
+                return
+            moves = self.gamerecord.getNextFiveStep()
+            for result in moves:
+                self.change_status()
+                self.conduct_move(result[0], result[1], result[2], result[3], result[4], result[5])
+
+            if len(self.gamerecord.gameBackwardStack) == 0:
+                self.set_right_disable()
+            self.set_left_enable()
+            pass
+        except Exception as e:
+            print(e)
 
     def return_end(self):
-        moves = self.gamerecord.getNextAllStep()
-        for result in moves:
-            self.conduct_move(result[0], result[1], result[2], result[3], result[4], result[5])
-            self.change_status()
-        if len(self.gamerecord.gameBackwardStack) == 0:
-            self.set_right_disable()
-        self.set_left_enable()
-        pass
+        try:
+            if self.status == 3 or self.status == 4:
+                QMessageBox.Warning(self, "提示", "当前为电脑方下棋，不允许控制棋谱！")
+                return
+            moves = self.gamerecord.getNextAllStep()
+            for result in moves:
+                self.change_status()
+                self.conduct_move(result[0], result[1], result[2], result[3], result[4], result[5])
+
+            if len(self.gamerecord.gameBackwardStack) == 0:
+                self.set_right_disable()
+            self.set_left_enable()
+            pass
+        except Exception as e:
+            print(e)
 
     def cancel_move(self, last_x, last_y, x, y, arr_x, arr_y):
         offset = self.chess.width() / 12
@@ -382,7 +471,8 @@ class InterFace(QMainWindow):
         pass
 
     def conduct_move(self, last_x, last_y, x, y, arr_x, arr_y):
-        flag = self.chessboard[(x, y)] = self.chessboard[(last_x, last_y)]
+        flag = self.chessboard[(last_x, last_y)]
+        self.chessboard[(x, y)] = flag
         self.chessboard[(last_x, last_y)] = 0
         offset = self.chess.width() / 12
         chess1 = self.chess.childAt(QPoint(last_x * offset + 2, (11 - last_y) * offset + 2))
@@ -413,16 +503,21 @@ class InterFace(QMainWindow):
         self.antiThreadFlag = 1
         if self.mode == 1:
             self.status = 3 - self.status
+            self.antimouse = 0
+            self.Refresh.setEnabled(False)
         elif self.mode == 2:
             if self.status == 1 or self.status == 2:
                 self.status = 5 - self.status
                 self.antimouse = 1
+                self.Refresh.setEnabled(False)
             elif self.status == 3 or self.status == 4:
                 self.status = 5 - self.status
                 self.antimouse = 0
+                self.Refresh.setEnabled(True)
         elif self.mode == 3:
             self.status = 7 - self.status
             self.antimouse = 1
+            self.Refresh.setEnabled(False)
 
     def set_left_enable(self):
         self.Hide_left_left.setEnabled(True)
@@ -575,8 +670,10 @@ class InterFace(QMainWindow):
         self.Prohibit.triggered.connect(self.moveInforce)
         self.Prohibit.setEnabled(False)
         self.tb.addAction(self.Prohibit)
-        Refresh = QAction(QIcon("./images/Refresh.png"), "刷新棋盘", self)
-        self.tb.addAction(Refresh)
+        self.Refresh = QAction(QIcon("./images/Refresh.png"), "刷新棋盘", self)
+        self.Refresh.setEnabled(False)
+        self.Refresh.triggered.connect(self.release_thread)
+        self.tb.addAction(self.Refresh)
         Analyze = QAction(QIcon("./images/Analyze.png"), "分析", self)
         self.tb.addAction(Analyze)
         self.tb.addSeparator()
@@ -611,6 +708,59 @@ class InterFace(QMainWindow):
             self.toolcolumn.setIcon(QIcon())
             self.tb.setVisible(False)
 
+    def showLabel(self):
+
+        self.game_time = QLabel(self.centralwidget)
+        self.game_time.setFont(QFont("微软雅黑", 15))
+        self.game_time.setText("游戏时间————————————————————————————————————————————\
+                        ——————————")
+        self.game_time.setGeometry(self.centralwidget.width() / 3 * 2, self.centralwidget.height() / 15 * 4 + 20
+                                   , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+
+        self.white_time = QLabel(self.centralwidget)
+        self.white_time.setFont(QFont("微软雅黑", 15))
+        self.white_time.setText("正方：  00:00  ")
+        self.white_time.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 5 + 20
+                                    , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+
+        self.black_time = QLabel(self.centralwidget)
+        self.black_time.setFont(QFont("微软雅黑", 15))
+        self.black_time.setText("反方：  00:00  ")
+        self.black_time.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 6 + 20
+                                    , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+
+        self.current_action = QLabel(self.centralwidget)
+        self.current_action.setFont(QFont("微软雅黑", 15))
+        self.current_action.setText("当前行为————————————————————————————————————————————\
+                                ——————————")
+        self.current_action.setGeometry(self.centralwidget.width() / 3 * 2, self.centralwidget.height() / 15 * 7 + 40
+                                        , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+
+        self.action = QLabel(self.centralwidget)
+        self.action.setFont(QFont("微软雅黑", 15))
+        self.action.setText("  None  ")
+        self.action.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 8 + 45
+                                , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+
+        self.current_status = QLabel(self.centralwidget)
+        self.current_status.setFont(QFont("微软雅黑", 15))
+        self.current_status.setText("状态————————————————————————————————————————————\
+                                        ——————————")
+        self.current_status.setGeometry(self.centralwidget.width() / 3 * 2, self.centralwidget.height() / 15 * 9 + 60
+                                        , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+
+        self.game_status = QLabel(self.centralwidget)
+        self.game_status.setFont(QFont("微软雅黑", 15))
+        self.game_status.setText("游戏状态：  等待开始  ")
+        self.game_status.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 10 + 60
+                                     , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+
+        self.game_eva = QLabel(self.centralwidget)
+        self.game_eva.setFont(QFont("微软雅黑", 15))
+        self.game_eva.setText("估值：  0.0  ")
+        self.game_eva.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 11 + 60
+                                  , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+
     # 初始化棋盘
     def initBoard(self):
         self.chessboard = {}
@@ -628,10 +778,15 @@ class InterFace(QMainWindow):
             element.setVisible(False)
             self.labelList.append(element)
 
+        self.game.over = False
+        self.game.winner = -1
         self.chess_coord = []
         self.chess_coord.append([])
         self.chess_coord.append([])
-        self.antimouse = 0
+        if self.status == 1 or self.status == 2:
+            self.antimouse = 0
+        else:
+            self.antimouse = 1
         # 此处需要加上显示棋子的label的清除
         for x in range(1, 11):
             for y in range(1, 11):
@@ -651,17 +806,36 @@ class InterFace(QMainWindow):
         self.chess.setGeometry(20, 20, minsize, minsize)
         self.chess.setPixmap(QPixmap("./images/%s" % (str(self.settings.value('chessboard', 'chessboard.png')))))
         self.chess.setScaledContents(True)
-        self.display = QLabel(self.centralwidget)
-        self.display.setFont(QFont("微软雅黑", 12))
-        self.display.setAlignment(Qt.AlignTop)
-        self.text = "\n玩家————————————————————————————————————————————————————————\
-\n\n    白方：  Human  \n\n    黑方：  Human  \n\n\n游戏时间————————————————————————————————————————————\
-——————————\n\n    白方：  00:00  \n\n    黑方：  00:00  \n\n\n当前行为——————————————————————————————————\
-————————————————————————\n\n    None\n\n\n状态——————————————————————————————————\
-——————————————————————\n\n    游戏状态：  等待开始  \n\n    估值：  0.0  \n\n    走法总数：  0  "
-        self.display.setText(self.text)
-        self.display.setGeometry(self.centralwidget.width() / 3 * 2, 20, self.centralwidget.width() / 3 - 40,
-                                 self.centralwidget.height() - 40)
+
+        if self.mode == 1:
+            plus = 'Human'
+            minus = 'Human'
+        elif self.mode == 2:
+            if self.status == 1:
+                plus = 'Human'
+                minus = 'Computer'
+            else:
+                plus = 'Computer'
+                minus = 'Human'
+        else:
+            plus = 'Computer'
+            minus = 'Computer'
+        self.player = QLabel(self.centralwidget)
+        self.player.setFont(QFont("微软雅黑", 15))
+        self.player.setText("玩家————————————————————————————————————————————\
+                        ——————————")
+        self.player.setGeometry(self.centralwidget.width() / 3 * 2, self.centralwidget.height() / 15
+                                , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+        self.white = QLabel(self.centralwidget)
+        self.white.setFont(QFont("微软雅黑", 15))
+        self.white.setText("正方：  %s  " % plus)
+        self.white.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 2
+                               , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+        self.black = QLabel(self.centralwidget)
+        self.black.setFont(QFont("微软雅黑", 15))
+        self.black.setText("反方：  %s  " % minus)
+        self.black.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 3
+                               , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
 
         # 布置棋盘
         offset = self.chess.width() / 12
@@ -670,7 +844,7 @@ class InterFace(QMainWindow):
                 if (self.chessboard[(x, y)] == 2):
                     la = self.labelList.pop()
                     la.setVisible(True)
-                    la.setPixmap(QPixmap("./images/chess_white.png"))
+                    la.setPixmap(QPixmap("./images/%s.png" % (str(self.settings.value('plus', 'chess_white')))))
                     la.setScaledContents(True)
                     la.setGeometry(x * offset + 2, (11 - y) * offset + 2, offset - 2, offset - 2)
                     la.setProperty("coordx", x)
@@ -679,7 +853,7 @@ class InterFace(QMainWindow):
                 elif (self.chessboard[(x, y)] == 3):
                     la = self.labelList.pop()
                     la.setVisible(True)
-                    la.setPixmap(QPixmap("./images/chess_black.png"))
+                    la.setPixmap(QPixmap("./images/%s.png" % (str(self.settings.value('minus', 'chess_black')))))
                     la.setScaledContents(True)
                     la.setGeometry(x * offset + 2, (11 - y) * offset + 2, offset - 2, offset - 2)
                     la.setProperty("coordx", x)
@@ -700,8 +874,28 @@ class InterFace(QMainWindow):
     def resizeEvent(self, event):
         minsize = min(self.centralwidget.width() / 3 * 2 - 40, self.centralwidget.height() - 40)
         self.chess.setGeometry(20, 20, minsize, minsize)
-        self.display.setGeometry(self.centralwidget.width() / 3 * 2, 20, self.centralwidget.width() / 3 - 40,
-                                 self.centralwidget.height() - 40)
+        self.player.setGeometry(self.centralwidget.width() / 3 * 2, self.centralwidget.height() / 15,
+                                self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+        self.white.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 2
+                               , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+        self.black.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 3
+                               , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+        self.game_time.setGeometry(self.centralwidget.width() / 3 * 2, self.centralwidget.height() / 15 * 4 + 20
+                                   , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+        self.white_time.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 5 + 20
+                                    , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+        self.black_time.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 6 + 20
+                                    , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+        self.current_action.setGeometry(self.centralwidget.width() / 3 * 2, self.centralwidget.height() / 15 * 7 + 40
+                                        , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+        self.action.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 8 + 45
+                                , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+        self.current_status.setGeometry(self.centralwidget.width() / 3 * 2, self.centralwidget.height() / 15 * 9 + 60
+                                        , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+        self.game_status.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 10 + 60
+                                     , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
+        self.game_eva.setGeometry(self.centralwidget.width() / 3 * 2 + 40, self.centralwidget.height() / 15 * 11 + 60
+                                  , self.centralwidget.width() / 3 - 40, self.centralwidget.height() / 15)
         offset = self.chess.width() / 12
         list = self.chess.children()
         for x in list:
@@ -735,11 +929,17 @@ class InterFace(QMainWindow):
                             else:
                                 list.setPixmap(
                                     QPixmap("./images/%s.png" % (str(self.settings.value('minus', 'chess_black')))))
+                            self.action.setText("  None  ")
                             self.clicktimes -= 1
 
     # 发射障碍动画
     def shootArrow(self, lx, ly, x, y):
         offset = self.chess.width() / 12
+        if self.currentChess == 2:
+            self.action.setText("  正方在(%d,%d)处设置障碍   " % (x, y))
+        else:
+            self.action.setText("  反方在(%d,%d)处设置障碍   " % (x, y))
+
         ba = self.labelList.pop()
 
         ba.setPixmap(QPixmap("./images/%s.png" % (str(self.settings.value('ball', 'ball')))))
@@ -754,7 +954,6 @@ class InterFace(QMainWindow):
         self.animation.setEndValue(QRect(x * offset + 1.5, (11 - y) * offset + 1.5, offset - 2, offset - 2))
         self.ba = ba
         self.animation.start()
-        self.animation.finished.connect(self.freeMouse)
         self.animation.finished.connect(self.playMovie)
 
     # 属性动画结束后播放movie
@@ -763,20 +962,34 @@ class InterFace(QMainWindow):
         self.ba.setMovie(self.movie)
         self.movie.start()
         self.movie.finished.connect(self.judgeIsover)
+        self.movie.finished.connect(self.freeMouse)
 
     # 判断棋局是否结束
     def judgeIsover(self):
         self.game.isOver(self.chessboard, self.status, self.chess_coord)
         if self.game.over:
             if self.game.winner == 1:
-                QMessageBox.information(self, "游戏结束", "反方获胜！  赢%d" % self.blank + "子", QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.information(self, "游戏结束", "反方获胜！  赢%d" % self.game.blank + "子",
+                                        QMessageBox.Yes | QMessageBox.No,
                                         QMessageBox.Yes)
             elif self.game.winner == 0:
-                QMessageBox.information(self, "游戏结束", "正方获胜！  赢%d" % self.blank + "子", QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.information(self, "游戏结束", "正方获胜！  赢%d" % self.game.blank + "子",
+                                        QMessageBox.Yes | QMessageBox.No,
                                         QMessageBox.Yes)
             else:
                 QMessageBox.information(self, "游戏结束", "winner不应该为-1,请检查isOver方法！", QMessageBox.Yes | QMessageBox.No,
                                         QMessageBox.Yes)
+            self.antimouse = 1
+            self.antiThreadFlag = 1
+            if self.mode == 1:
+                self.status = 3 - self.status
+            elif self.mode == 2:
+                if self.status == 1 or self.status == 2:
+                    self.status = 5 - self.status
+                elif self.status == 3 or self.status == 4:
+                    self.status = 5 - self.status
+            elif self.mode == 3:
+                self.status = 7 - self.status
         else:
             if self.mode == 1:
                 self.status = 3 - self.status
@@ -790,6 +1003,14 @@ class InterFace(QMainWindow):
             elif self.mode == 3:
                 self.status = 7 - self.status
                 self.antiThreadFlag = 0  # 释放子线程响应
+        if self.time_recorder[0].isActive() == True:
+            self.time_recorder[0].stop()
+            self.time_recorder[1].start(1000)
+        else:
+            self.time_recorder[1].stop()
+            self.time_recorder[0].start(1000)
+        eva=Evaluator(self.chessboard,self.status,self.chess_coord)
+        self.game_eva.setText("  估值：%.2f  "%(eva.value))
 
     # 动画播放时禁止鼠标操作
     def freeMouse(self):
@@ -801,8 +1022,10 @@ class InterFace(QMainWindow):
         list = self.chess.childAt(QPoint(lx * offset + 2, (11 - ly) * offset + 2))
         if self.currentChess == 2:
             list.setPixmap(QPixmap("./images/%s.png" % (str(self.settings.value('plus', 'chess_white')))))
+            self.action.setText("  正方棋子从(%d,%d)移至(%d,%d)   " % (lx, ly, x, y))
         else:
             list.setPixmap(QPixmap("./images/%s.png" % (str(self.settings.value('minus', 'chess_black')))))
+            self.action.setText("  反方棋子从(%d,%d)移至(%d,%d)   " % (lx, ly, x, y))
         list.setProperty("coordx", x)
         list.setProperty("coordy", y)
         self.animation = QPropertyAnimation(list, b"geometry")
@@ -817,8 +1040,10 @@ class InterFace(QMainWindow):
         list = self.chess.childAt(QPoint(x * offset + 5, (11 - y) * offset + 5))
         if self.currentChess == 2:
             movie = QMovie("./images/%s.gif" % (str(self.settings.value('plus', 'chess_white'))))
+            self.action.setText("  正方 选中 (%d,%d) 处棋子  " % (x, y))
         else:
             movie = QMovie("./images/%s.gif" % (str(self.settings.value('minus', 'chess_black'))))
+            self.action.setText("  反方 选中 (%d,%d) 处棋子  " % (x, y))
         list.setMovie(movie)
         movie.start()
 
@@ -850,6 +1075,8 @@ class InterFace(QMainWindow):
                 if self.game.moveRule(self.chessboard, lx, ly, x, y):
                     self.chessboard[(lx, ly)] = 0
                     self.chessboard[(x, y)] = self.currentChess
+                    self.gamerecord.currentMove.append(lx)
+                    self.gamerecord.currentMove.append(ly)
                     self.gamerecord.currentMove.append(x)
                     self.gamerecord.currentMove.append(y)
                     if self.currentChess == 2:
@@ -880,14 +1107,10 @@ class InterFace(QMainWindow):
             else:
                 if self.status == 1 and self.chessboard[(x, y)] == 2:
                     self.currentChess = 2
-                    self.gamerecord.currentMove.append(x)
-                    self.gamerecord.currentMove.append(y)
                     self.selectChess(x, y)
                     pass
                 elif self.status == 2 and self.chessboard[(x, y)] == 3:
                     self.currentChess = 3
-                    self.gamerecord.currentMove.append(x)
-                    self.gamerecord.currentMove.append(y)
                     self.selectChess(x, y)
                 elif self.chessboard[(x, y)] == 1:
                     QMessageBox.information(self, "提示", "此处无棋子")
