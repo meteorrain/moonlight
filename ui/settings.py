@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 # @time： 2018/4/8
 # @author: RuiQing Chen
 # @definition:
@@ -14,7 +13,8 @@ from PyQt5.QtCore import *
 class Function(QWidget):
     def __init__(self, parent=None):
         super(Function, self).__init__(parent)
-        self.setFixedSize(600, 500)
+        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        self.setFixedSize(600, 570)
         self.setWindowTitle("分布式系统设置")
         self.settings = QSettings("configure", QSettings.IniFormat)
         self.display()
@@ -48,37 +48,54 @@ class Function(QWidget):
         self.line1.setScaledContents(True)
         self.line1.setGeometry(10, 170, 580, 3)
 
+        self.line2 = QLabel(self)
+        self.line2.setPixmap(QPixmap("./images/black.png"))
+        self.line2.setScaledContents(True)
+        self.line2.setGeometry(10, 250, 580, 3)
+        self.tips3 = QLabel(self)
+        self.tips3.setFont(QFont("楷体", 18))
+        self.tips3.setText("计算端口号：")
+        self.tips3.setGeometry(50, 200, 160, 30)
+        self.input2 = QLineEdit(self)
+        self.input2.setGeometry(240, 200, 250, 30)
+        self.input2.setFont(QFont("微软雅黑", 15))
+        self.input2.setText(str(self.settings.value("compute_port", "")))
+
         self.tips2 = QLabel(self)
         self.tips2.setFont(QFont("楷体", 18))
         self.tips2.setText("计算集群数量：")
-        self.tips2.setGeometry(50, 210, 160, 30)
+        self.tips2.setGeometry(50, 270, 160, 30)
         self.combo2 = QComboBox(self)
         self.combo2.addItems(['  1  ', '  2  ', '  3  '])
-        self.combo2.setGeometry(240, 210, 100, 30)
+        self.combo2.setGeometry(240, 270, 100, 30)
         self.combo2.setFont(QFont("宋体", 15))
-        self.combo2.setCurrentIndex(int(self.settings.value('computer_num',1))-1)
+        self.combo2.setCurrentIndex(int(self.settings.value('computer_num', 1)) - 1)
         self.combo2.currentIndexChanged.connect(self.changeInputLine)
 
         self.line1 = QLabel(self)
         self.line1.setPixmap(QPixmap("./images/b4.png"))
         self.line1.setScaledContents(True)
-        self.line1.setGeometry(10, 420, 585, 20)
+        self.line1.setGeometry(10, 480, 585, 20)
 
         self.start = QPushButton(self)
         self.start.setFont(QFont("黑体", 15))
         self.start.setText("应用")
-        self.start.setGeometry(320, 450, 100, 30)
+        self.start.setGeometry(320, 510, 100, 30)
         self.start.clicked.connect(self.apply)
 
         self.stop = QPushButton(self)
         self.stop.setFont(QFont("黑体", 15))
         self.stop.setText("退出")
-        self.stop.setGeometry(450, 450, 100, 30)
+        self.stop.setGeometry(450, 510, 100, 30)
         self.stop.clicked.connect(self.quit)
         self.collect = [[], []]
         for i in range(3):
-            self.collect[0].append(QLabel(self))
-            self.collect[1].append(QLineEdit(self))
+            x = QLabel(self)
+            x.setFont(QFont("楷体", 18))
+            self.collect[0].append(x)
+            y = QLineEdit(self)
+            y.setFont(QFont("微软雅黑", 15))
+            self.collect[1].append(y)
         self.changeInputLine()
 
     def changeInputLine(self):
@@ -96,19 +113,19 @@ class Function(QWidget):
         for i in range(1, num + 1):
             tips1 = self.collect[0][i - 1]
             tips1.setVisible(True)
-            tips1.setFont(QFont("楷体", 18))
+            # tips1.setFont(QFont("楷体", 18))
             if i == 1:
                 tips1.setText("计算服务器①IP：")
             elif i == 2:
                 tips1.setText("计算服务器②IP：")
             else:
                 tips1.setText("计算服务器③IP：")
-            tips1.setGeometry(50, 260 + (i - 1) * 50, 200, 30)
+            tips1.setGeometry(50, 320 + (i - 1) * 50, 200, 30)
             input1 = self.collect[1][i - 1]
             input1.setVisible(True)
-            input1.setGeometry(240, 260 + (i - 1) * 50, 250, 30)
-            input1.setFont(QFont("微软雅黑", 15))
-            input1.setText(self.settings.value("compute%d" % (i-1), ""))
+            input1.setGeometry(240, 320 + (i - 1) * 50, 250, 30)
+            # input1.setFont(QFont("微软雅黑", 15))
+            input1.setText(self.settings.value("compute%d" % (i - 1), ""))
 
     # 将窗口移至屏幕中心
     def center(self):
@@ -123,8 +140,8 @@ class Function(QWidget):
         self.close()
 
     def apply(self):
-        if self.check_port(self.input.text()) != 5:
-            QMessageBox.warning(self, "提示", "通用端口应为1025-65535之间的整数！", QMessageBox.Yes,
+        if self.check_port(self.input.text()) != 5 or self.check_port(self.input2.text()) != 5:
+            QMessageBox.warning(self, "提示", "端口号应为1025-65535之间的整数，请检查通信和计算端口号！", QMessageBox.Yes,
                                 QMessageBox.Yes)
             return
         if self.check_ip(self.input1.text()) != 0:
@@ -145,13 +162,14 @@ class Function(QWidget):
                                     QMessageBox.Yes)
                 return
         self.settings.setValue("port", self.input.text())
+        self.settings.setValue("compute_port", self.input2.text())
         self.settings.setValue("communicate", self.input1.text())
         self.settings.setValue('computer_num', self.combo2.currentIndex() + 1)
         for i in range(3):
-            if i<=self.combo2.currentIndex():
+            if i <= self.combo2.currentIndex():
                 self.settings.setValue("compute%d" % i, self.collect[1][i].text())
             else:
-                self.settings.setValue('compute%d'%i,'')
+                self.settings.setValue('compute%d' % i, '')
         self.start.setEnabled(False)
 
     def check_port(self, s2):
@@ -194,6 +212,7 @@ class Function(QWidget):
 class Parameter(QWidget):
     def __init__(self, parent=None):
         super(Parameter, self).__init__(parent)
+        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.setFixedSize(600, 550)
         self.setWindowTitle("算法参数设置")
         self.settings = QSettings("configure", QSettings.IniFormat)
@@ -375,6 +394,7 @@ class Parameter(QWidget):
 class Mode(QWidget):
     def __init__(self, parent=None):
         super(Mode, self).__init__(parent)
+        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.setFixedSize(500, 300)
         self.setWindowTitle("对战模式设置")
         self.settings = QSettings('configure', QSettings.IniFormat)
@@ -474,6 +494,7 @@ class Mode(QWidget):
 class Aspect(QWidget):
     def __init__(self, parent=None):
         super(Aspect, self).__init__(parent)
+        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.setFixedSize(800, 800)
         self.setWindowTitle("界面设置")
         self.settings = QSettings('configure', QSettings.IniFormat)
@@ -604,13 +625,55 @@ class Aspect(QWidget):
         self.close()
 
 
+class General(QTabWidget):
+    def __init__(self):
+        super(General, self).__init__()
+        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        self.setWindowTitle('设置')
+
+        self.setTabShape(QTabWidget.Triangular)
+        self.addTab(Parameter(), '参数设置')
+        self.addTab(Function(), '功能分配')
+        self.addTab(Mode(), '对战模式')
+        self.addTab(Aspect(), '界面选择')
+        self.setSize()
+
+        self.currentChanged.connect(self.setSize)
+
+    def setSize(self):
+        if self.currentIndex() == 0:
+            self.resize(600, 590)
+        elif self.currentIndex() == 1:
+            self.resize(600, 610)
+        elif self.currentIndex() == 2:
+            self.resize(500, 340)
+        else:
+            self.resize(800, 840)
+
+class Situation(QScrollArea):
+    def __init__(self,text='None'):
+        super(Situation,self).__init__()
+        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        self.setWindowTitle('博弈实况')
+        self.setFixedSize(400,500)
+        self.setWindowFlags(Qt.WindowMinMaxButtonsHint)
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
+
+        self.test=QLabel()
+        self.test.setFont(QFont('微软雅黑',20))
+        self.test.setText(text)
+        self.setWidget(self.test)
+        self.ensureVisible(self.test.x()+self.test.width(),self.test.y()+self.test.height(),5,5)
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon("./images/moon_128px.ico"))
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     # form = Parameter()
     # form = Function()
-    form = Mode()
+    # form = Mode()
     # form = Aspect()
+    # form =General()
+    text='---------博--弈--实--况---------\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\ndfs\n\n\n\n\nfgd'
+    form=Situation(text)
     form.show()
     sys.exit(app.exec())

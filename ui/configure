@@ -21,3 +21,4 @@ ball=ball
 clarity=0.62
 computer_num=1
 compute2=
+compute_port=12306

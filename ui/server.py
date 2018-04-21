@@ -47,11 +47,11 @@ class Child(Thread):
                 pack.append("")
                 pack.append(stock[6])
                 for ip in stock[5]:
-                    self.work.server.sendto(dumps(pack).encode(encoding='utf-8'), (ip, 12306))
+                    self.work.server.sendto(dumps(pack).encode(encoding='utf-8'), (ip, stock[7]))
                 data1, address1 = self.work.server.recvfrom(2048)
                 if data1.decode(encoding='utf-8') == 'stop':
                     for ip in stock[5]:
-                        self.work.server.sendto('stop'.encode(encoding='utf-8'), (ip, 12306))
+                        self.work.server.sendto('stop'.encode(encoding='utf-8'), (ip, stock[7]))
                     result = []
                     for i in range(len(stock[5])):
                         data2, address2 = self.work.server.recvfrom(30 * 2048)
