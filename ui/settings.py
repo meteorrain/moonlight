@@ -4,7 +4,7 @@
 # @definition:
 
 import sys
-import qdarkstyle
+# import qdarkstyle
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -13,7 +13,6 @@ from PyQt5.QtCore import *
 class Function(QWidget):
     def __init__(self, parent=None):
         super(Function, self).__init__(parent)
-        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.setFixedSize(600, 570)
         self.setWindowTitle("分布式系统设置")
         self.settings = QSettings("configure", QSettings.IniFormat)
@@ -212,7 +211,6 @@ class Function(QWidget):
 class Parameter(QWidget):
     def __init__(self, parent=None):
         super(Parameter, self).__init__(parent)
-        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.setFixedSize(600, 550)
         self.setWindowTitle("算法参数设置")
         self.settings = QSettings("configure", QSettings.IniFormat)
@@ -394,7 +392,6 @@ class Parameter(QWidget):
 class Mode(QWidget):
     def __init__(self, parent=None):
         super(Mode, self).__init__(parent)
-        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.setFixedSize(500, 300)
         self.setWindowTitle("对战模式设置")
         self.settings = QSettings('configure', QSettings.IniFormat)
@@ -494,7 +491,6 @@ class Mode(QWidget):
 class Aspect(QWidget):
     def __init__(self, parent=None):
         super(Aspect, self).__init__(parent)
-        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.setFixedSize(800, 800)
         self.setWindowTitle("界面设置")
         self.settings = QSettings('configure', QSettings.IniFormat)
@@ -628,14 +624,22 @@ class Aspect(QWidget):
 class General(QTabWidget):
     def __init__(self):
         super(General, self).__init__()
-        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        # self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.setWindowTitle('设置')
-
+        self.setFont(QFont('楷体',15))
         self.setTabShape(QTabWidget.Triangular)
-        self.addTab(Parameter(), '参数设置')
-        self.addTab(Function(), '功能分配')
-        self.addTab(Mode(), '对战模式')
-        self.addTab(Aspect(), '界面选择')
+        parameter=Parameter()
+        parameter.stop.clicked.connect(self.close)
+        self.addTab(parameter, '参数设置')
+        func=Function()
+        func.stop.clicked.connect(self.close)
+        self.addTab(func, '功能分配')
+        mode=Mode()
+        mode.stop.clicked.connect(self.close)
+        self.addTab(mode, '对战模式')
+        aspect=Aspect()
+        aspect.stop.clicked.connect(self.close)
+        self.addTab(aspect, '界面选择')
         self.setSize()
 
         self.currentChanged.connect(self.setSize)
@@ -643,17 +647,48 @@ class General(QTabWidget):
     def setSize(self):
         if self.currentIndex() == 0:
             self.resize(600, 590)
+            self.center()
         elif self.currentIndex() == 1:
             self.resize(600, 610)
+            self.center()
         elif self.currentIndex() == 2:
             self.resize(500, 340)
+            self.center()
         else:
             self.resize(800, 840)
+            self.center()
+
+    def center(self):
+        screen = QDesktopWidget().screenGeometry()
+        size = self.geometry()
+        self.move((screen.width() - size.width()) / 2, (screen.height() - size.height()) / 2)
+
+
+class About(QWidget):
+    def __init__(self):
+        super(About,self).__init__()
+        self.setFixedSize(450,250)
+        self.setWindowTitle('关于moonlight')
+        self.icon=QLabel(self)
+        self.icon.setPixmap(QPixmap('./images/moon_128px.ico'))
+        self.icon.setScaledContents(True)
+        self.icon.setGeometry(40,40,40,40)
+        self.name=QLabel(self)
+        self.name.setFont(QFont('宋体',15))
+        self.name.setText('程序名：moonlight\n版本：2.1.0')
+        self.name.setGeometry(120,15,200,100)
+        self.contact=QLabel(self)
+        self.contact.setFont(QFont('楷体',12))
+        self.contact.setGeometry(30,120,400,60)
+        self.contact.setText('联系方式    qq:845717607\n            e-mail：mechrevox6@gmail.com')
+        self.copyright=QLabel(self)
+        self.copyright.setFont(QFont('楷体',10))
+        self.copyright.setText('Copyright © 2018 - 2028 RuiQing Chen.All Rights Reserved.')
+        self.copyright.setGeometry(20,200,400,30)
 
 class Situation(QScrollArea):
     def __init__(self,text='None'):
         super(Situation,self).__init__()
-        self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.setWindowTitle('博弈实况')
         self.setFixedSize(400,500)
         self.setWindowFlags(Qt.WindowMinMaxButtonsHint)
@@ -673,7 +708,8 @@ if __name__ == '__main__':
     # form = Mode()
     # form = Aspect()
     # form =General()
+    form = About()
     text='---------博--弈--实--况---------\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\ndfs\n\n\n\n\nfgd'
-    form=Situation(text)
+    # form=Situation(text)
     form.show()
     sys.exit(app.exec())

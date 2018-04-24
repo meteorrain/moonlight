@@ -6,10 +6,10 @@
 #             clicktimes:控制棋局中鼠标点击次数
 #             times:控制工具栏的显示
 
-import sys
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
+# import sys
+# from PyQt5.QtWidgets import *
+# from PyQt5.QtGui import *
+# from PyQt5.QtCore import *
 from gamerule import GameRule
 from gamerecorder import GameRecorder
 from strategy import Strategy
@@ -17,7 +17,7 @@ from threading import Thread
 from simulator import Simulator
 from evaluator import Evaluator
 from copy import deepcopy
-from time import time, sleep, strftime, localtime
+from time import time, sleep
 from socket import socket, AF_INET, SOCK_DGRAM
 from json import dumps, loads
 from settings import *
@@ -62,6 +62,7 @@ class WorkThread(QThread):
                         and (
                         self.interFace.status == 3 or self.interFace.status == 4) and self.interFace.antiThreadFlag == 0:
                     self.interFace.Prohibit.setEnabled(True)
+                    self.interFace.m_move_now.setEnabled(True)
                     self.interFace.set_left_disable()
                     self.interFace.set_right_disable()
 
@@ -78,16 +79,7 @@ class WorkThread(QThread):
                     self.interFace.set_right_disable()
                     self.interFace.gamerecord.clear_history()
                     self.interFace.Prohibit.setEnabled(False)
-
-
-class StatusThread(Thread):
-    def __init__(self, interFace):
-        super(StatusThread, self).__init__()
-        self.interFace = interFace
-
-    def run(self):
-        while True:
-            sleep(0.5)
+                    self.interFace.m_move_now.setEnabled(False)
 
 
 # 主窗口
@@ -137,6 +129,12 @@ class InterFace(QMainWindow):
         self.time_recorder.append(x2)
         self.antimouse = 1
         self.run_status = 0
+        self.mode_dialog = None
+        self.aspect_dialog = None
+        self.function_dialog = None
+        self.parameter_dialog = None
+        self.set_dialog = None
+        self.about_dialog = None
 
     '''
     以下为子线程获取电脑走法的界面显示函数
@@ -311,6 +309,8 @@ class InterFace(QMainWindow):
                 self.initBoard()
                 self.white_time.setText("正方：  00:00  ")
                 self.black_time.setText("反方：  00:00  ")
+                self.game_eva.setText("估值：  0.0  ")
+                self.action.setText("  None  ")
                 for i in range(2):
                     self.time_counter[i].setHMS(0, 0, 0)
                 self.run_status = 0
@@ -319,13 +319,26 @@ class InterFace(QMainWindow):
             self.pause.setEnabled(True)
             self.stop.setEnabled(True)
             self.Situation.setEnabled(True)
+            self.open.setEnabled(False)
+            self.save.setEnabled(True)
+            self.Set.setEnabled(False)
+
+            self.m_new_game.setEnabled(False)
+            self.m_pause_game.setEnabled(True)
+            self.m_stop_game.setEnabled(True)
+            self.m_history.setEnabled(True)
+            self.m_open.setEnabled(False)
+            self.m_save.setEnabled(True)
+            self.m_aspect.setEnabled(False)
+            self.m_mode.setEnabled(False)
+            self.m_parameter.setEnabled(False)
+            self.m_function.setEnabled(False)
             self.game_status.setText("游戏状态：  运行中  ")
             if self.status == 1 or self.status == 3:
                 self.time_recorder[0].start(1000)
             else:
                 self.time_recorder[1].start(1000)
-            self.open.setEnabled(False)
-            self.save.setEnabled(True)
+
         except Exception as e:
             print(e)
 
@@ -337,6 +350,8 @@ class InterFace(QMainWindow):
         self.run_status = 2
         self.start.setEnabled(True)
         self.pause.setEnabled(False)
+        self.m_new_game.setEnabled(True)
+        self.m_pause_game.setEnabled(False)
         for i in range(2):
             if self.time_recorder[i].isActive() == True:
                 self.time_recorder[i].stop()
@@ -353,12 +368,24 @@ class InterFace(QMainWindow):
         self.pause.setEnabled(False)
         self.start.setEnabled(True)
         self.Situation.setEnabled(False)
+        self.open.setEnabled(True)
+        self.Set.setEnabled(True)
+
+        self.m_stop_game.setEnabled(False)
+        self.m_pause_game.setEnabled(False)
+        self.m_new_game.setEnabled(True)
+        self.m_history.setEnabled(False)
+        self.m_open.setEnabled(True)
+        self.m_aspect.setEnabled(True)
+        self.m_mode.setEnabled(True)
+        self.m_parameter.setEnabled(True)
+        self.m_function.setEnabled(True)
+
         for i in range(2):
             if self.time_recorder[i].isActive() == True:
                 self.time_recorder[i].stop()
         self.game_status.setText("游戏状态：  已停止  ")
         self.openflag = 0
-        self.open.setEnabled(True)
 
     def update_time1(self):
         self.time_counter[0] = self.time_counter[0].addSecs(1)
@@ -548,21 +575,33 @@ class InterFace(QMainWindow):
         self.Hide_left_left.setEnabled(True)
         self.Hide_left.setEnabled(True)
         self.left.setEnabled(True)
+        self.m_up.setEnabled(True)
+        self.m_up5.setEnabled(True)
+        self.m_start.setEnabled(True)
 
     def set_right_enable(self):
-        self.right.setEnabled(True)
-        self.Hide_right.setEnabled(True)
         self.Hide_right_right.setEnabled(True)
+        self.Hide_right.setEnabled(True)
+        self.right.setEnabled(True)
+        self.m_down.setEnabled(True)
+        self.m_down5.setEnabled(True)
+        self.m_end.setEnabled(True)
 
     def set_left_disable(self):
         self.Hide_left_left.setEnabled(False)
         self.Hide_left.setEnabled(False)
         self.left.setEnabled(False)
+        self.m_up.setEnabled(False)
+        self.m_up5.setEnabled(False)
+        self.m_start.setEnabled(False)
 
     def set_right_disable(self):
-        self.right.setEnabled(False)
-        self.Hide_right.setEnabled(False)
         self.Hide_right_right.setEnabled(False)
+        self.Hide_right.setEnabled(False)
+        self.right.setEnabled(False)
+        self.m_down.setEnabled(False)
+        self.m_down5.setEnabled(False)
+        self.m_end.setEnabled(False)
 
     def release_thread(self):
         self.antiThreadFlag = 0
@@ -589,6 +628,8 @@ class InterFace(QMainWindow):
 
     def openFile(self):
         openfile = QFileDialog.getOpenFileName(self, '打开棋谱', './chess manual', 'Txt Files(*.txt)')
+        if openfile[0] == '':
+            return
         with open(openfile[0], 'r', encoding='utf-8') as f:
             text = f.read()
             self.string_to_chessboard(text)
@@ -596,6 +637,8 @@ class InterFace(QMainWindow):
 
     def saveFile(self):
         savefile = QFileDialog.getSaveFileName(self, '保存棋谱', './chess manual', 'Txt Files(*.txt)')
+        if savefile[0] == '':
+            return
         with open(savefile[0], 'w', encoding='utf-8') as f:
             text = self.chessboard_to_string()
             f.write(text)
@@ -643,19 +686,19 @@ class InterFace(QMainWindow):
 
     def chessboard_to_string(self):
         string = '< 亚 马 逊 棋 游 戏----------棋 谱 记 录 >\n\n'
-        string += '< 基 本 游 戏 信 息 >\n\n'
+        string += '< 基 本 游 戏 信 息 ↓ >\n\n'
         string += QDateTime.currentDateTime().toString('记录时间： yyyy/MM/dd  hh:mm:ss\n\n')
         string += '正方：%s    已用时间：%s\n\n' % (self.plus, self.time_counter[0].toString('mm:ss'))
         string += '反方：%s    已用时间：%s\n\n' % (self.minus, self.time_counter[1].toString('mm:ss'))
-        string += '< 基 本 游 戏 信 息 >\n\n'
-        string += '< 行 棋 记 录 >\n\n'
+        string += '< 基 本 游 戏 信 息 ↑ >\n\n'
+        string += '< 行 棋 记 录 ↓ >\n\n'
         char = '-ABCDEFGHIJ-'
         for record in self.gamerecord.gameForwardStack:
             string += ' ' + char[record[0]] + '%2d' % (record[1]) + ' → ' + char[record[2]] + '%2d' % (
                 record[3]) + ' → ' + \
                       char[record[4]] + '%2d' % (record[5]) + '\n\n'
-        string += '< 行 棋 记 录 >\n\n'
-        string += '< 棋 盘 数 据 >\n\n'
+        string += '< 行 棋 记 录 ↑ >\n\n'
+        string += '< 棋 盘 数 据 ↓ >\n\n'
         string += '   -----------------------------------------\n'
         for i in range(1, 11):
             string += '%2d | ' % i
@@ -664,8 +707,8 @@ class InterFace(QMainWindow):
             string += '\n'
             string += '   -----------------------------------------\n'
         string += '     A   B   C   D   E   F   G   H   I   J   \n\n'
-        string += '< 棋 盘 数 据 >\n\n'
-        string += '< 棋 盘 存 储 >\n\n'
+        string += '< 棋 盘 数 据 ↑ >\n\n'
+        string += '< 棋 盘 存 储 ↓ >\n\n'
         for i in range(1, 11):
             for j in range(1, 11):
                 string += str(self.chessboard[(i, j)])
@@ -683,69 +726,189 @@ class InterFace(QMainWindow):
                 string += '%2d' % coord[i]
         return string
 
+    def generate_set(self):
+        if self.set_dialog == None:
+            self.set_dialog = General()
+            screen = QDesktopWidget().screenGeometry()
+            size = self.set_dialog.geometry()
+            self.set_dialog.move((screen.width() - size.width()) / 2, (screen.height() - size.height()) / 2)
+            self.set_dialog.show()
+        else:
+            if self.set_dialog.isVisible() == True:
+                self.set_dialog.setVisible(False)
+            else:
+                self.set_dialog.setVisible(True)
+
+    def generate_mode(self):
+        if self.mode_dialog == None:
+            self.mode_dialog = Mode()
+            screen = QDesktopWidget().screenGeometry()
+            size = self.mode_dialog.geometry()
+            self.mode_dialog.move((screen.width() - size.width()) / 2, (screen.height() - size.height()) / 2)
+            self.mode_dialog.show()
+        else:
+            if self.mode_dialog.isVisible() == True:
+                self.mode_dialog.setVisible(False)
+            else:
+                self.mode_dialog.setVisible(True)
+
+    def generate_aspect(self):
+        if self.aspect_dialog == None:
+            self.aspect_dialog = Aspect()
+            screen = QDesktopWidget().screenGeometry()
+            size = self.aspect_dialog.geometry()
+            self.aspect_dialog.move((screen.width() - size.width()) / 2, (screen.height() - size.height()) / 2)
+            self.aspect_dialog.show()
+        else:
+            if self.aspect_dialog.isVisible() == True:
+                self.aspect_dialog.setVisible(False)
+            else:
+                self.aspect_dialog.setVisible(True)
+
+    def generate_parameter(self):
+        if self.parameter_dialog == None:
+            self.parameter_dialog = Parameter()
+            screen = QDesktopWidget().screenGeometry()
+            size = self.parameter_dialog.geometry()
+            self.parameter_dialog.move((screen.width() - size.width()) / 2, (screen.height() - size.height()) / 2)
+            self.parameter_dialog.show()
+        else:
+            if self.parameter_dialog.isVisible() == True:
+                self.parameter_dialog.setVisible(False)
+            else:
+                self.parameter_dialog.setVisible(True)
+
+    def generate_function(self):
+        if self.function_dialog == None:
+            self.function_dialog = Function()
+            screen = QDesktopWidget().screenGeometry()
+            size = self.function_dialog.geometry()
+            self.function_dialog.move((screen.width() - size.width()) / 2, (screen.height() - size.height()) / 2)
+            self.function_dialog.show()
+        else:
+            if self.function_dialog.isVisible() == True:
+                self.function_dialog.setVisible(False)
+            else:
+                self.function_dialog.setVisible(True)
+
+    def generate_about(self):
+        if self.about_dialog == None:
+            self.about_dialog = About()
+            screen = QDesktopWidget().screenGeometry()
+            size = self.about_dialog.geometry()
+            self.about_dialog.move((screen.width() - size.width()) / 2, (screen.height() - size.height()) / 2)
+            self.about_dialog.show()
+        else:
+            if self.about_dialog.isVisible() == True:
+                self.about_dialog.setVisible(False)
+            else:
+                self.about_dialog.setVisible(True)
+
     # 设置菜单栏
     def menuLayout(self):
         self.bar = self.menuBar()
         # 游戏的子菜单
         game = self.bar.addMenu(" 游  戏 ")
-        newgame = QAction("新游戏", self)
-        newgame.setShortcut("F5")
-        game.addAction(newgame)
-        pausegame = QAction("暂停游戏", self)
-        pausegame.setShortcut("F6")
-        game.addAction(pausegame)
-        stopgame = QAction("停止游戏", self)
-        stopgame.setShortcut("F7")
-        game.addAction(stopgame)
+        self.m_new_game = QAction("新游戏", self)
+        self.m_new_game.setShortcut("F5")
+        self.m_new_game.setIcon(QIcon('./images/Start.png'))
+        self.m_new_game.triggered.connect(self.start_game)
+        game.addAction(self.m_new_game)
+        self.m_pause_game = QAction("暂停游戏", self)
+        self.m_pause_game.setShortcut("F6")
+        self.m_pause_game.setIcon(QIcon('./images/Pause.png'))
+        self.m_pause_game.setEnabled(False)
+        self.m_pause_game.triggered.connect(self.pause_game)
+        game.addAction(self.m_pause_game)
+        self.m_stop_game = QAction("停止游戏", self)
+        self.m_stop_game.setShortcut("F7")
+        self.m_stop_game.setIcon(QIcon('./images/Stop_red.png'))
+        self.m_stop_game.setEnabled(False)
+        self.m_stop_game.triggered.connect(self.stop_game)
+        game.addAction(self.m_stop_game)
         game.addSeparator()
-        open = QAction("打开", self)
-        open.setShortcut("Ctrl+O")
-        game.addAction(open)
-        save = QAction("保存", self)
-        save.setShortcut("Ctrl+S")
-        game.addAction(save)
+        self.m_open = QAction("打开", self)
+        self.m_open.setShortcut("Ctrl+O")
+        self.m_open.setIcon(QIcon('./images/open_file.png'))
+        self.m_open.triggered.connect(self.openFile)
+        game.addAction(self.m_open)
+        self.m_save = QAction("保存", self)
+        self.m_save.setShortcut("Ctrl+S")
+        self.m_save.setIcon(QIcon('./images/Save.png'))
+        self.m_save.setEnabled(False)
+        self.m_save.triggered.connect(self.saveFile)
+        game.addAction(self.m_save)
         game.addSeparator()
-        quit = QAction("退出", self)
-        quit.setShortcut("Ctrl+Q")
-        game.addAction(quit)
+        self.m_quit = QAction("退出", self)
+        self.m_quit.setShortcut("Ctrl+Q")
+        self.m_quit.setIcon(QIcon('./images/quit.png'))
+        self.m_quit.triggered.connect(self.close)
+        game.addAction(self.m_quit)
         # 棋局控制的子菜单
         situation = self.bar.addMenu("棋局控制")
-        up = QAction("后退一步", self)
-        up.setShortcut("F9")
-        situation.addAction(up)
-        down = QAction("前进一步", self)
-        down.setShortcut("F10")
-        situation.addAction(down)
-        up5 = QAction("后退五步", self)
-        up5.setShortcut("F11")
-        situation.addAction(up5)
-        down5 = QAction("前进五步", self)
-        down5.setShortcut("F12")
-        situation.addAction(down5)
-        start = QAction("回到开局", self)
-        start.setShortcut("F1")
-        situation.addAction(start)
-        end = QAction("直达终局", self)
-        end.setShortcut("F2")
-        situation.addAction(end)
+        self.m_up = QAction("后退一步", self)
+        self.m_up.setShortcut("F9")
+        self.m_up.setIcon(QIcon('./images/left.png'))
+        self.m_up.triggered.connect(self.back)
+        situation.addAction(self.m_up)
+        self.m_down = QAction("前进一步", self)
+        self.m_down.setShortcut("F10")
+        self.m_down.setIcon(QIcon('./images/right.png'))
+        self.m_down.triggered.connect(self.forward)
+        situation.addAction(self.m_down)
+        self.m_up5 = QAction("后退五步", self)
+        self.m_up5.setShortcut("F11")
+        self.m_up5.setIcon(QIcon('./images/Hide_left.png'))
+        self.m_up5.triggered.connect(self.back_five)
+        situation.addAction(self.m_up5)
+        self.m_down5 = QAction("前进五步", self)
+        self.m_down5.setShortcut("F12")
+        self.m_down5.setIcon(QIcon('./images/Hide_right.png'))
+        self.m_down5.triggered.connect(self.forward_five)
+        situation.addAction(self.m_down5)
+        self.m_start = QAction("回到开局", self)
+        self.m_start.setShortcut("F1")
+        self.m_start.setIcon(QIcon('./images/Hide_left_left.png'))
+        self.m_start.triggered.connect(self.return_begin)
+        situation.addAction(self.m_start)
+        self.m_end = QAction("直达终局", self)
+        self.m_end.setShortcut("F2")
+        self.m_end.setIcon(QIcon('./images/Hide_right_right.png'))
+        self.m_end.triggered.connect(self.return_end)
+        situation.addAction(self.m_end)
         situation.addSeparator()
-        movenow = QAction("强制落子", self)
-        movenow.setShortcut("Ctrl+R")
-        situation.addAction(movenow)
+        self.m_move_now = QAction("强制落子", self)
+        self.m_move_now.setShortcut("Ctrl+I")
+        self.m_move_now.setIcon(QIcon('./images/Prohibit.png'))
+        self.m_move_now.setEnabled(False)
+        self.m_move_now.triggered.connect(self.moveInforce)
+        situation.addAction(self.m_move_now)
+        self.m_refresh = QAction('释放线程', self)
+        self.m_refresh.setShortcut("Ctrl+R")
+        self.m_refresh.setIcon(QIcon('./images/Refresh.png'))
+        self.m_refresh.setEnabled(False)
+        self.m_refresh.triggered.connect(self.release_thread)
+        situation.addAction(self.m_refresh)
 
         # 设置的子菜单
         setting = self.bar.addMenu(" 设  置 ")
-        gamemode = QAction("对战模式", self)
-        setting.addAction(gamemode)
-        aspect = QAction("界面设置", self)
-        setting.addAction(aspect)
+        self.m_mode = QAction("对战模式", self)
+        self.m_mode.triggered.connect(self.generate_mode)
+        self.m_mode.setShortcut("Ctrl+M")
+        setting.addAction(self.m_mode)
+        self.m_aspect = QAction("界面设置", self)
+        self.m_aspect.setShortcut("Ctrl+P")
+        self.m_aspect.triggered.connect(self.generate_aspect)
+        setting.addAction(self.m_aspect)
         setting.addSeparator()
-        parallelmode = QAction("功能分配", self)
-        setting.addAction(parallelmode)
-
-        parameter = QAction("参数设置", self)
-        parameter.setShortcut("Ctrl+H")
-        setting.addAction(parameter)
+        self.m_function = QAction("功能分配", self)
+        self.m_function.setShortcut("Ctrl+F")
+        self.m_function.triggered.connect(self.generate_function)
+        setting.addAction(self.m_function)
+        self.m_parameter = QAction("参数设置", self)
+        self.m_parameter.triggered.connect(self.generate_parameter)
+        self.m_parameter.setShortcut("Ctrl+H")
+        setting.addAction(self.m_parameter)
         # 视图的子菜单
         view = self.bar.addMenu(" 视  图 ")
         self.toolcolumn = QAction("工具栏", self)
@@ -753,17 +916,16 @@ class InterFace(QMainWindow):
         self.toolcolumn.setIcon(QIcon("./images/checked.png"))
         self.toolcolumn.triggered.connect(self.displayToolbar)
         view.addAction(self.toolcolumn)
-        textbox = QAction("文本框", self)
-        view.addAction(textbox)
-        movehistory = QAction("博弈实况", self)
-        view.addAction(movehistory)
-        # 关于的子菜单
-        about = self.bar.addMenu(" 帮  助 ")
-        copyinfo = QAction("关于moonlight", self)
-        copyinfo.setShortcut("Ctrl+I")
-        about.addAction(copyinfo)
-        help = QAction("技术相关", self)
-        about.addAction(help)
+        self.m_history = QAction("博弈实况", self)
+        self.m_history.setIcon(QIcon('./images/Situation.png'))
+        self.m_history.setEnabled(False)
+        self.m_history.triggered.connect(self.showText)
+        view.addAction(self.m_history)
+        self.m_info = QAction("关于moonlight", self)
+        self.m_info.setShortcut("Ctrl+A")
+        self.m_info.setIcon(QIcon('./images/temp.png'))
+        self.m_info.triggered.connect(self.generate_about)
+        view.addAction(self.m_info)
 
     # 设置工具栏
     def toolLayout(self):
@@ -816,17 +978,14 @@ class InterFace(QMainWindow):
         self.Refresh.setEnabled(False)
         self.Refresh.triggered.connect(self.release_thread)
         self.tb.addAction(self.Refresh)
-        # Analyze = QAction(QIcon("./images/Analyze.png"), "分析", self)
-        # self.tb.addAction(Analyze)
         self.tb.addSeparator()
         self.Situation = QAction(QIcon("./images/Situation.png"), "博弈实况", self)
         self.Situation.triggered.connect(self.showText)
         self.Situation.setEnabled(False)
         self.tb.addAction(self.Situation)
-        # Info = QAction(QIcon("./images/Info.png"), "文本窗口", self)
-        # self.tb.addAction(Info)
-        Setting = QAction(QIcon("./images/Setting.png"), "设置", self)
-        self.tb.addAction(Setting)
+        self.Set = QAction(QIcon("./images/Setting.png"), "设置", self)
+        self.tb.addAction(self.Set)
+        self.Set.triggered.connect(self.generate_set)
         # self.tb.addSeparator()
         # Sound = QAction(QIcon("./images/Sound.png"), "声音", self)
         # self.tb.addAction(Sound)
