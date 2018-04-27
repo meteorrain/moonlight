@@ -7,7 +7,7 @@ from math import *
 
 class Evaluator:
     def __init__(self, chessboard, status, chess_coord):
-        self.status = 0 if status==1 or status==2 else 1
+        self.status = 0 if status==1 or status==3 else 1
         self.chessboard = chessboard
         self.chess_coord = chess_coord
         self.kingMovePositive = {}

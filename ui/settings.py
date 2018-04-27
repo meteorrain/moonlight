@@ -4,7 +4,6 @@
 # @definition:
 
 import sys
-# import qdarkstyle
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -628,20 +627,20 @@ class General(QTabWidget):
         self.setWindowTitle('设置')
         self.setFont(QFont('楷体',15))
         self.setTabShape(QTabWidget.Triangular)
-        parameter=Parameter()
-        parameter.stop.clicked.connect(self.close)
-        self.addTab(parameter, '参数设置')
-        func=Function()
-        func.stop.clicked.connect(self.close)
-        self.addTab(func, '功能分配')
-        mode=Mode()
-        mode.stop.clicked.connect(self.close)
-        self.addTab(mode, '对战模式')
-        aspect=Aspect()
-        aspect.stop.clicked.connect(self.close)
-        self.addTab(aspect, '界面选择')
+        self.parameter=Parameter()
+        self.parameter.stop.clicked.connect(self.close)
+        self.addTab(self.parameter, '参数设置')
+        self.func=Function()
+        self.func.stop.clicked.connect(self.close)
+        self.addTab(self.func, '功能分配')
+        self.mode=Mode()
+        self.mode.stop.clicked.connect(self.close)
+        self.addTab(self.mode, '对战模式')
+        self.aspect=Aspect()
+        self.aspect.stop.clicked.connect(self.close)
+        self.addTab(self.aspect, '界面选择')
         self.setSize()
-
+        self.setCurrentIndex(0)
         self.currentChanged.connect(self.setSize)
 
     def setSize(self):
@@ -669,6 +668,7 @@ class About(QWidget):
         super(About,self).__init__()
         self.setFixedSize(450,250)
         self.setWindowTitle('关于moonlight')
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
         self.icon=QLabel(self)
         self.icon.setPixmap(QPixmap('./images/moon_128px.ico'))
         self.icon.setScaledContents(True)

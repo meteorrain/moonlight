@@ -15,7 +15,7 @@ from strategy import Strategy
 from threading import Thread
 from time import sleep
 
-
+buffer_size=2048
 class Child(Thread):
     def __init__(self, work, host, port):
         super(Child, self).__init__()
@@ -24,59 +24,71 @@ class Child(Thread):
         self.port = port
 
     def run(self):
-        while True:
-            data, address = self.work.server.recvfrom(2048)
-            print("success!")
-            stock = loads(data.decode(encoding='utf-8'))
-            if stock[4] == 0:
-                self.work.state1.setText("通信中")
-                if (len(stock[5])) == 0:
-                    QMessageBox.warning(self.work, "提示", "目标IP为空！", QMessageBox.Yes,
-                                        QMessageBox.Yes)
-                else:
-                    # QMessageBox.information(self.work, "提示", "成功传入！", QMessageBox.Yes,
-                    #                         QMessageBox.Yes)
-                    for i in range(4):
-                        print(stock[i])
-                pack = []
-                pack.append(stock[0])
-                pack.append(stock[1])
-                pack.append(stock[2])
-                pack.append(stock[3])
-                pack.append(1)
-                pack.append("")
-                pack.append(stock[6])
-                for ip in stock[5]:
-                    self.work.server.sendto(dumps(pack).encode(encoding='utf-8'), (ip, stock[7]))
-                data1, address1 = self.work.server.recvfrom(2048)
-                if data1.decode(encoding='utf-8') == 'stop':
-                    for ip in stock[5]:
-                        self.work.server.sendto('stop'.encode(encoding='utf-8'), (ip, stock[7]))
-                    result = []
-                    for i in range(len(stock[5])):
-                        data2, address2 = self.work.server.recvfrom(30 * 2048)
-                        result.append(loads(data2.decode(encoding='utf-8')))
-                    lastResult = self.work.compose(result, len(stock[5]))
-                    self.work.server.sendto(dumps(lastResult).encode(encoding='utf-8'), address)
-                self.work.state1.setText("未分配")
-
-            if stock[4] == 1:
-                self.work.state1.setText("计算中")
-                self.work.convert(stock[0])
-                strategy = Strategy(self.work.chessboard, stock[1], stock[2], stock[3], stock[6][1], stock[6][2],
-                                    stock[6][3], stock[6][4], stock[6][5], stock[6][6], stock[6][7])
-                strategy.search_init()
-                strategy.search_start()
-                while True:
-                    data3, address3 = self.work.server.recvfrom(2048)
-                    if data3.decode(encoding='utf-8') == 'stop':
-                        strategy.search_stop()
-                        break
+        try:
+            while True:
+                data, address = self.work.server.recvfrom(int(buffer_size/2))
+                print("success!")
+                stock = loads(data.decode(encoding='utf-8'))
+                if stock[4] == 0:
+                    self.work.state1.setText("通信中")
+                    if (len(stock[5])) == 0:
+                        QMessageBox.warning(self.work, "提示", "目标IP为空！", QMessageBox.Yes,
+                                            QMessageBox.Yes)
                     else:
-                        continue
-                strategy.get_all_children()
-                self.work.server.sendto(dumps(strategy.children).encode(encoding='utf-8'), address)
-                self.work.state1.setText("未分配")
+                        # QMessageBox.information(self.work, "提示", "成功传入！", QMessageBox.Yes,
+                        #                         QMessageBox.Yes)
+                        # for i in range(4):
+                        #     print(stock[i])
+                        pass
+                    pack = []
+                    pack.append(stock[0])
+                    pack.append(stock[1])
+                    pack.append(stock[2])
+                    pack.append(stock[3])
+                    pack.append(1)
+                    pack.append("")
+                    pack.append(stock[6])
+                    for ip in stock[5]:
+                        self.work.server.sendto(dumps(pack).encode(encoding='utf-8'), (ip, stock[7]))
+                    data1, address1 = self.work.server.recvfrom(int(buffer_size/4))
+                    if data1.decode(encoding='utf-8') == 'stop':
+                        for ip in stock[5]:
+                            self.work.server.sendto('stop'.encode(encoding='utf-8'), (ip, stock[7]))
+                        result = []
+                        summary=0
+                        for i in range(len(stock[5])):
+                            data2, address2 = self.work.server.recvfrom(35*buffer_size)
+                            receive=loads(data2.decode(encoding='utf-8'))
+                            result.append(receive[0])
+                            summary+=receive[1]
+                        lastResult = self.work.compose(result, len(stock[5]))
+                        print(summary)
+                        self.work.server.sendto(dumps(lastResult).encode(encoding='utf-8'), address)
+                    self.work.state1.setText("未分配")
+
+                if stock[4] == 1:
+                    self.work.state1.setText("计算中")
+                    self.work.convert(stock[0])
+                    strategy = Strategy(self.work.chessboard, stock[1], stock[2], stock[3], stock[6][1], stock[6][2],
+                                        stock[6][3], stock[6][4], stock[6][5], stock[6][6], stock[6][7])
+                    strategy.search_init()
+                    strategy.search_start()
+                    while True:
+                        data3, address3 = self.work.server.recvfrom(int(buffer_size/4))
+                        if data3.decode(encoding='utf-8') == 'stop':
+                            strategy.search_stop()
+                            break
+                        else:
+                            continue
+                    strategy.get_all_children()
+                    pack=[]
+                    pack.append(strategy.children)
+                    pack.append(strategy.record_num)
+                    print('搜素结果：%d'%(sys.getsizeof(dumps(pack).encode(encoding='utf-8'))))
+                    self.work.server.sendto(dumps(pack).encode(encoding='utf-8'), address)
+                    self.work.state1.setText("未分配")
+        except Exception as e:
+            print(e)
 
 
 class Assistant(Thread):

@@ -107,6 +107,10 @@ class Strategy:
     def search_stop(self):
         for i in range(self.process_num):
             self.process[i].terminate()
+        self.record_num=self.state_space[0].visit_num
+        print(self.state_space[0].visit_num)
+        print(self.max_depth.value)
+        print(self.curr_num.value)
         # print(self.state_space[0].children_num)
         # try:
         #     for i in range(self.state_space[0].children_num):
